@@ -26,14 +26,15 @@ log = structlog.get_logger()
 class Pipeline:
     """Orchestrates the full 7-phase repo transformation pipeline."""
 
-    def __init__(self, config: Settings) -> None:
+    def __init__(self, config: Settings, event_bus: EventBus | None = None) -> None:
         """Initialise the pipeline with all agents and services.
 
         Args:
             config: Application settings.
+            event_bus: Optional shared event bus (e.g., API-owned) for broadcasting.
         """
         self._config = config
-        self.event_bus = EventBus()
+        self.event_bus = event_bus or EventBus()
         self._router = ModelRouter(config)
         self._ingester = RepoIngester(config)
         self._consensus_engine = ConsensusEngine(config, self.event_bus)
