@@ -1,2 +1,0 @@
-[console_scripts]
-repoman = repoman.__main__:app
