@@ -31,7 +31,7 @@ async def websocket_job(websocket: WebSocket, job_id: str) -> None:
                 if data.get("job_id") != job_id:
                     continue
                 await websocket.send_text(json.dumps(event))
-            except TimeoutError:
+            except TimeoutError:  # asyncio.TimeoutError is an alias in Python 3.12
                 await websocket.send_text(json.dumps({"event": "ping", "data": {}}))
     except WebSocketDisconnect:
         pass
