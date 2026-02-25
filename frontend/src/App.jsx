@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import RepoInput from './components/RepoInput'
 import PipelineView from './components/PipelineView'
 import AgentDebate from './components/AgentDebate'
@@ -19,11 +19,25 @@ export default function App() {
     m.event === 'debate_message'
   )
 
-  // React to status changes
-  if (status === 'completed' && view === 'pipeline') {
-    getJob(jobId).then(setJob)
+  useEffect(() => {
+    if (status !== 'completed' || view !== 'pipeline' || !jobId) return
+
+    let cancelled = false
     setView('results')
-  }
+
+    ;(async () => {
+      try {
+        const j = await getJob(jobId)
+        if (!cancelled) setJob(j)
+      } catch (err) {
+        if (!cancelled) console.error('Failed to fetch job', err)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [jobId, status, view])
 
   const handleJobStarted = (id) => {
     setJobId(id)
