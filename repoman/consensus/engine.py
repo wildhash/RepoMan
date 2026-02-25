@@ -34,6 +34,7 @@ class ConsensusEngine:
         audit_reports: list[AgentAuditReport],
         agents: list[BaseAgent],
         orchestrator: OrchestratorAgent,
+        job_id: str | None = None,
     ) -> ConsensusResult:
         """Run the full debate protocol and return a ConsensusResult.
 
@@ -46,6 +47,12 @@ class ConsensusEngine:
             ConsensusResult with the unified plan, votes, and transcript.
         """
         transcript: list[DebateMessage] = []
+
+        async def emit_message(msg: DebateMessage) -> None:
+            payload = msg.model_dump(mode="json")
+            if job_id is not None:
+                payload = {"job_id": job_id, **payload}
+            await self._event_bus.emit("debate_message", payload)
 
         # Phase 1: All agents propose plans in parallel
         proposals = await asyncio.gather(
@@ -66,7 +73,7 @@ class ConsensusEngine:
                     content=str(proposal),
                 )
                 transcript.append(msg)
-                await self._event_bus.emit("debate_message", msg.model_dump(mode="json"))
+                await emit_message(msg)
 
         unified_plan: dict = {}
         votes: dict[str, AgentVote] = {}
@@ -93,7 +100,7 @@ class ConsensusEngine:
                         content=str(critique),
                     )
                     transcript.append(msg)
-                    await self._event_bus.emit("debate_message", msg.model_dump(mode="json"))
+                    await emit_message(msg)
 
             # Phase 2b: Each agent revises their plan
             revisions = await asyncio.gather(
@@ -110,7 +117,7 @@ class ConsensusEngine:
                         content=str(revision),
                     )
                     transcript.append(msg)
-                    await self._event_bus.emit("debate_message", msg.model_dump(mode="json"))
+                    await emit_message(msg)
 
             # Phase 2c: Orchestrator synthesises
             try:
@@ -126,7 +133,7 @@ class ConsensusEngine:
                 content=str(unified_plan),
             )
             transcript.append(synthesis_msg)
-            await self._event_bus.emit("debate_message", synthesis_msg.model_dump(mode="json"))
+            await emit_message(synthesis_msg)
 
             # Phase 2d: All agents vote
             vote_results = await asyncio.gather(
@@ -152,7 +159,7 @@ class ConsensusEngine:
                     agreement_level=votes[agent.name].score / 10.0,
                 )
                 transcript.append(msg)
-                await self._event_bus.emit("debate_message", msg.model_dump(mode="json"))
+                await emit_message(msg)
 
             # Phase 2e: Check consensus
             if all(v.score >= self._config.consensus_threshold for v in votes.values()):

@@ -10,9 +10,7 @@ export default function App() {
   const [view, setView] = useState('input') // input | pipeline | results
   const [jobId, setJobId] = useState(null)
   const [job, setJob] = useState(null)
-  const [currentPhase, setCurrentPhase] = useState(null)
-  const [completedPhases, setCompletedPhases] = useState([])
-  const { messages, status, connected } = useWebSocket(jobId)
+  const { messages, status, connected, currentPhase, completedPhases } = useWebSocket(jobId)
 
   // Process WebSocket events
   const debateMessages = messages.filter((m) =>
@@ -20,7 +18,7 @@ export default function App() {
   )
 
   useEffect(() => {
-    if (status !== 'completed' || view !== 'pipeline' || !jobId) return
+    if (status !== 'completed' || !jobId) return
 
     let cancelled = false
     setView('results')
@@ -37,7 +35,7 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [jobId, status, view])
+  }, [jobId, status])
 
   const handleJobStarted = (id) => {
     setJobId(id)

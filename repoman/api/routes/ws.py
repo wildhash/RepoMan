@@ -14,8 +14,7 @@ router = APIRouter(tags=["websocket"])
 async def websocket_job(websocket: WebSocket, job_id: str) -> None:
     """Stream real-time events for a pipeline job.
 
-    Subscribes to the event bus and forwards all events to the client.
-    Auto-reconnects if the client disconnects.
+    Subscribes to the event bus and forwards job-scoped events to the client.
 
     Args:
         websocket: The WebSocket connection.
@@ -28,6 +27,9 @@ async def websocket_job(websocket: WebSocket, job_id: str) -> None:
         while True:
             try:
                 event = await asyncio.wait_for(queue.get(), timeout=30.0)
+                data = event.get("data") or {}
+                if data.get("job_id") != job_id:
+                    continue
                 await websocket.send_text(json.dumps(event))
             except TimeoutError:
                 await websocket.send_text(json.dumps({"event": "ping", "data": {}}))

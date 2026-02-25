@@ -34,11 +34,11 @@ async def transform_repo(
     jobs[job_id] = {"status": JobStatus.queued, "result": None}
 
     config = request.app.state.config
-    pipeline = Pipeline(config, event_bus=request.app.state.event_bus)
+    pipeline = Pipeline(config, event_bus=getattr(request.app.state, "event_bus", None))
 
     async def run_pipeline() -> None:
         jobs[job_id]["status"] = JobStatus.running
-        result: PipelineResult = await pipeline.run(body.repo_url)
+        result: PipelineResult = await pipeline.run(body.repo_url, job_id=job_id)
         jobs[job_id]["status"] = result.status
         jobs[job_id]["result"] = result
 

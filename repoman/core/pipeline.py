@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from typing import Any
 
 import structlog
 
@@ -53,30 +54,40 @@ class Pipeline:
             except Exception as exc:
                 log.warning("knowledge_base_disabled", error=str(exc))
 
-    async def run(self, repo_url: str) -> PipelineResult:
+    async def run(self, repo_url: str, job_id: str | None = None) -> PipelineResult:
         """Execute the full pipeline for a repository URL.
 
         Args:
             repo_url: Git repository URL to transform.
+            job_id: Optional externally-provided job identifier.
 
         Returns:
             PipelineResult with all phases' outputs.
         """
-        state = PipelineState(repo_url=repo_url, status=JobStatus.running)
+        state_kwargs: dict[str, Any] = {"repo_url": repo_url, "status": JobStatus.running}
+        if job_id is not None:
+            state_kwargs["job_id"] = job_id
+        state = PipelineState(**state_kwargs)
         start_time = time.time()
 
-        await self.event_bus.emit("pipeline_started", {"job_id": state.job_id, "repo_url": repo_url})
+        async def emit(event: str, data: dict[str, Any] | None = None) -> None:
+            payload: dict[str, Any] = {"job_id": state.job_id}
+            if data:
+                payload.update(data)
+            await self.event_bus.emit(event, payload)
+
+        await emit("pipeline_started", {"repo_url": repo_url})
 
         try:
             # Phase 1: Ingestion
             state.current_phase = Phase.ingestion
-            await self.event_bus.emit("phase_started", {"phase": Phase.ingestion.value})
+            await emit("phase_started", {"phase": Phase.ingestion.value})
             state.snapshot = await self._ingester.ingest(repo_url)
-            await self.event_bus.emit("phase_completed", {"phase": Phase.ingestion.value})
+            await emit("phase_completed", {"phase": Phase.ingestion.value})
 
             # Phase 2: Parallel audit
             state.current_phase = Phase.audit
-            await self.event_bus.emit("phase_started", {"phase": Phase.audit.value})
+            await emit("phase_started", {"phase": Phase.audit.value})
             audit_results = await asyncio.gather(
                 self._architect.audit(state.snapshot),
                 self._auditor.audit(state.snapshot),
@@ -86,31 +97,41 @@ class Pipeline:
             for result in audit_results:
                 if not isinstance(result, Exception):
                     state.audit_reports.append(result)
-            await self.event_bus.emit("phase_completed", {"phase": Phase.audit.value, "reports": len(state.audit_reports)})
+            await emit(
+                "phase_completed",
+                {"phase": Phase.audit.value, "reports": len(state.audit_reports)},
+            )
 
             # Phase 3: Consensus
             state.current_phase = Phase.consensus
-            await self.event_bus.emit("phase_started", {"phase": Phase.consensus.value})
+            await emit("phase_started", {"phase": Phase.consensus.value})
             state.consensus = await self._consensus_engine.run(
                 state.audit_reports,
                 [self._architect, self._auditor, self._builder],
                 self._orchestrator,
+                job_id=state.job_id,
             )
-            await self.event_bus.emit("phase_completed", {"phase": Phase.consensus.value, "achieved": state.consensus.achieved})
+            await emit(
+                "phase_completed",
+                {"phase": Phase.consensus.value, "achieved": state.consensus.achieved},
+            )
 
             # Phase 4: Execution
             state.current_phase = Phase.execution
-            await self.event_bus.emit("phase_started", {"phase": Phase.execution.value})
+            await emit("phase_started", {"phase": Phase.execution.value})
             file_ops = FileOps(state.snapshot.clone_path)
             change_sets = await self._builder.execute_plan(
                 state.consensus.unified_plan, state.snapshot, file_ops
             )
             state.change_sets.extend(change_sets)
-            await self.event_bus.emit("phase_completed", {"phase": Phase.execution.value, "steps": len(change_sets)})
+            await emit(
+                "phase_completed",
+                {"phase": Phase.execution.value, "steps": len(change_sets)},
+            )
 
             # Phase 5: Review
             state.current_phase = Phase.review
-            await self.event_bus.emit("phase_started", {"phase": Phase.review.value})
+            await emit("phase_started", {"phase": Phase.review.value})
             arch_review, audit_review = await asyncio.gather(
                 self._architect.review_changes(state.change_sets, state.snapshot),
                 self._auditor.review_changes(state.change_sets, state.snapshot),
@@ -124,23 +145,29 @@ class Pipeline:
                 fix_sets = await self._builder.apply_fixes(rejections, state.snapshot, file_ops)
                 state.change_sets.extend(fix_sets)
             state.review_approved = len(rejections) == 0
-            await self.event_bus.emit("phase_completed", {"phase": Phase.review.value, "approved": state.review_approved})
+            await emit(
+                "phase_completed",
+                {"phase": Phase.review.value, "approved": state.review_approved},
+            )
 
             # Phase 6: Validation
             state.current_phase = Phase.validation
-            await self.event_bus.emit("phase_started", {"phase": Phase.validation.value})
+            await emit("phase_started", {"phase": Phase.validation.value})
             state.validation = await self._validator.validate(
                 state.snapshot.clone_path, state.snapshot.primary_language
             )
-            await self.event_bus.emit("phase_completed", {"phase": Phase.validation.value, "passed": state.validation.all_passed})
+            await emit(
+                "phase_completed",
+                {"phase": Phase.validation.value, "passed": state.validation.all_passed},
+            )
 
             # Phase 7: Learning
             state.current_phase = Phase.learning
             if self._knowledge_base:
-                await self.event_bus.emit("phase_started", {"phase": Phase.learning.value})
+                await emit("phase_started", {"phase": Phase.learning.value})
                 result_for_learning = self._build_result(state, start_time, JobStatus.completed)
                 self._knowledge_base.learn_from_run(result_for_learning)
-                await self.event_bus.emit("phase_completed", {"phase": Phase.learning.value})
+                await emit("phase_completed", {"phase": Phase.learning.value})
 
             state.status = JobStatus.completed
 
@@ -148,10 +175,10 @@ class Pipeline:
             log.error("pipeline_failed", error=str(exc), exc_info=True)
             state.status = JobStatus.failed
             state.errors.append(str(exc))
-            await self.event_bus.emit("pipeline_failed", {"error": str(exc)})
+            await emit("pipeline_failed", {"error": str(exc)})
 
         result = self._build_result(state, start_time, state.status)
-        await self.event_bus.emit("pipeline_completed", {"job_id": state.job_id, "status": state.status.value})
+        await emit("pipeline_completed", {"status": state.status.value})
         return result
 
     def _build_result(self, state: PipelineState, start_time: float, status: JobStatus) -> PipelineResult:
