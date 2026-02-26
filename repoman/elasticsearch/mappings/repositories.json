@@ -1,0 +1,40 @@
+{
+  "mappings": {
+    "properties": {
+      "repo_id": {"type": "keyword"},
+      "name": {
+        "type": "text",
+        "fields": {"keyword": {"type": "keyword", "ignore_above": 256}}
+      },
+      "full_name": {"type": "keyword"},
+      "description": {"type": "text"},
+      "description_embedding": {
+        "type": "dense_vector",
+        "dims": 384,
+        "index": true,
+        "similarity": "cosine"
+      },
+      "language": {"type": "keyword"},
+      "topics": {"type": "keyword"},
+      "stars": {"type": "integer"},
+      "forks": {"type": "integer"},
+      "open_issues_count": {"type": "integer"},
+      "has_readme": {"type": "boolean"},
+      "has_contributing": {"type": "boolean"},
+      "has_license": {"type": "boolean"},
+      "last_commit_date": {"type": "date"},
+      "created_at": {"type": "date"},
+      "updated_at": {"type": "date"},
+      "health_score": {"type": "float"},
+      "status": {"type": "keyword"},
+      "recommendations": {
+        "type": "nested",
+        "properties": {
+          "type": {"type": "keyword"},
+          "severity": {"type": "keyword"},
+          "message": {"type": "text"}
+        }
+      }
+    }
+  }
+}

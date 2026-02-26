@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from repoman.api.routes import jobs, repos, ws
+from repoman.api.routes import analyze, dashboard, jobs, repos, search, ws
 from repoman.config import Settings
 from repoman.core.events import EventBus
+from repoman.elasticsearch.client import es_lifespan
+from repoman.embeddings.encoder import create_encoder
 
 
 def create_app(config: Settings | None = None) -> FastAPI:
@@ -21,10 +25,18 @@ def create_app(config: Settings | None = None) -> FastAPI:
     """
     cfg = config or Settings()
 
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        async with es_lifespan(cfg) as es:
+            app.state.elasticsearch = es
+            app.state.encoder = create_encoder(cfg)
+            yield
+
     app = FastAPI(
         title="RepoMan API",
         description="Multi-model agentic repository transformation system",
         version="0.1.0",
+        lifespan=lifespan,
     )
 
     app.add_middleware(
@@ -37,13 +49,16 @@ def create_app(config: Settings | None = None) -> FastAPI:
 
     # Attach shared state
     app.state.config = cfg
-    app.state.jobs: dict = {}
+    app.state.jobs = {}
     app.state.event_bus = EventBus()
 
     # Register routers
     app.include_router(repos.router)
     app.include_router(jobs.router)
     app.include_router(ws.router)
+    app.include_router(search.router)
+    app.include_router(dashboard.router)
+    app.include_router(analyze.router)
 
     @app.get("/health")
     async def health() -> dict:

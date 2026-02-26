@@ -1,0 +1,33 @@
+{
+  "mappings": {
+    "properties": {
+      "@timestamp": {"type": "date"},
+      "repo_full_name": {"type": "keyword"},
+      "analyzed_at": {"type": "date"},
+      "completeness_score": {"type": "float"},
+      "activity_score": {"type": "float"},
+      "community_score": {"type": "float"},
+      "missing_elements": {"type": "keyword"},
+      "duplicate_issue_groups": {
+        "type": "nested",
+        "properties": {
+          "representative_issue_id": {"type": "keyword"},
+          "issue_ids": {"type": "keyword"},
+          "max_similarity": {"type": "float"}
+        }
+      },
+      "stale_issues_count": {"type": "integer"},
+      "stale_prs_count": {"type": "integer"},
+      "direction_assessment": {"type": "text"},
+      "action_items": {
+        "type": "nested",
+        "properties": {
+          "priority": {"type": "keyword"},
+          "category": {"type": "keyword"},
+          "description": {"type": "text"},
+          "effort_estimate": {"type": "keyword"}
+        }
+      }
+    }
+  }
+}

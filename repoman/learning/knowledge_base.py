@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import structlog
 
@@ -22,9 +23,9 @@ class KnowledgeBase:
             config: Application settings with knowledge_base_path.
         """
         self._config = config
-        self._client = None
-        self._patterns = None
-        self._strategies = None
+        self._client: Any | None = None
+        self._patterns: Any | None = None
+        self._strategies: Any | None = None
         self._setup()
 
     def _setup(self) -> None:

@@ -94,9 +94,14 @@ class Pipeline:
                 self._builder.audit(state.snapshot),
                 return_exceptions=True,
             )
-            for result in audit_results:
-                if not isinstance(result, Exception):
-                    state.audit_reports.append(result)
+            for audit_result in audit_results:
+                if isinstance(audit_result, BaseException):
+                    if isinstance(audit_result, asyncio.CancelledError):
+                        raise audit_result
+                    if not isinstance(audit_result, Exception):
+                        raise audit_result
+                    continue
+                state.audit_reports.append(audit_result)
             await emit(
                 "phase_completed",
                 {"phase": Phase.audit.value, "reports": len(state.audit_reports)},
@@ -132,13 +137,19 @@ class Pipeline:
             # Phase 5: Review
             state.current_phase = Phase.review
             await emit("phase_started", {"phase": Phase.review.value})
-            arch_review, audit_review = await asyncio.gather(
+            review_results = await asyncio.gather(
                 self._architect.review_changes(state.change_sets, state.snapshot),
                 self._auditor.review_changes(state.change_sets, state.snapshot),
                 return_exceptions=True,
             )
             rejections: list[str] = []
-            for review in (arch_review, audit_review):
+            for review in review_results:
+                if isinstance(review, BaseException):
+                    if isinstance(review, asyncio.CancelledError):
+                        raise review
+                    if not isinstance(review, Exception):
+                        raise review
+                    continue
                 if isinstance(review, dict) and not review.get("approved", True):
                     rejections.extend(review.get("rejections", []))
             if rejections:

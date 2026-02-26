@@ -15,6 +15,8 @@ from repoman.config import Settings
 from repoman.utils.logging import configure_logging
 
 app = typer.Typer(name="repoman", help="Multi-model agentic repository transformation system")
+es_app = typer.Typer(name="es", help="Elasticsearch indexing and search utilities")
+app.add_typer(es_app)
 console = Console()
 
 
@@ -86,7 +88,11 @@ def audit(
             progress.update(task, description="Done!")
 
         for report in reports:
-            if isinstance(report, Exception):
+            if isinstance(report, BaseException):
+                if isinstance(report, asyncio.CancelledError):
+                    raise report
+                if not isinstance(report, Exception):
+                    raise report
                 console.print(f"[red]Audit failed: {report}[/red]")
                 continue
             console.print(Panel(
@@ -110,6 +116,93 @@ def serve(
     api_host = host or settings.api_host
     api_port = port or settings.api_port
     uvicorn.run(create_app(settings), host=api_host, port=api_port)
+
+
+@es_app.command("setup")
+def es_setup() -> None:
+    """Create Elasticsearch indices and templates (idempotent)."""
+    configure_logging()
+    settings = Settings()
+
+    async def _run() -> None:
+        from repoman.elasticsearch.client import create_es_client
+        from repoman.elasticsearch.index_management import ensure_indices
+
+        es = create_es_client(settings)
+        try:
+            await ensure_indices(es)
+            console.print("[green]Elasticsearch indices ensured.[/green]")
+        finally:
+            await es.close()
+
+    asyncio.run(_run())
+
+
+@es_app.command("ingest")
+def es_ingest(
+    input_value: str = typer.Argument(..., help="Repo URL, owner/repo, user/org, or GitHub search query"),
+    limit: int = typer.Option(20, "--limit", help="Max repos for user/org/search inputs"),
+    analyze: bool = typer.Option(False, "--analyze", help="Run analysis after ingestion"),
+) -> None:
+    """Ingest GitHub data into Elasticsearch."""
+    configure_logging()
+    settings = Settings()
+
+    async def _run() -> None:
+        from repoman.elasticsearch.client import create_es_client
+        from repoman.elasticsearch.index_management import ensure_indices
+        from repoman.elasticsearch.ingestion import ElasticsearchIngestionService
+
+        es = create_es_client(settings)
+        service = ElasticsearchIngestionService(settings, es=es)
+        try:
+            await ensure_indices(es)
+            repos = await service.ingest_input(input_value, limit=limit)
+            if not repos:
+                console.print("[yellow]No repositories found.[/yellow]")
+                return
+
+            for repo_full_name in repos:
+                result = await service.ingest_repo(repo_full_name)
+                console.print(
+                    f"[cyan]{repo_full_name}[/cyan] indexed: issues={result['issues_indexed']} health={result['health_score']}"
+                )
+                if analyze:
+                    analysis_doc = await service.analyze_repo(repo_full_name)
+                    console.print(
+                        f"  analysis indexed: stale_issues={analysis_doc.get('stale_issues_count')} duplicates={len(analysis_doc.get('duplicate_issue_groups') or [])}"
+                    )
+        finally:
+            await service.aclose()
+            await es.close()
+
+    asyncio.run(_run())
+
+
+@es_app.command("analyze")
+def es_analyze(
+    repo_full_name: str = typer.Argument(..., help="owner/repo"),
+) -> None:
+    """Run analysis for a repo already ingested into Elasticsearch."""
+    configure_logging()
+    settings = Settings()
+
+    async def _run() -> None:
+        from repoman.elasticsearch.client import create_es_client
+        from repoman.elasticsearch.ingestion import ElasticsearchIngestionService
+
+        es = create_es_client(settings)
+        service = ElasticsearchIngestionService(settings, es=es)
+        try:
+            analysis_doc = await service.analyze_repo(repo_full_name)
+            console.print(
+                f"[green]{repo_full_name}[/green] analysis indexed: missing={analysis_doc.get('missing_elements')} stale_issues={analysis_doc.get('stale_issues_count')}"
+            )
+        finally:
+            await service.aclose()
+            await es.close()
+
+    asyncio.run(_run())
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 """RepoMan configuration via Pydantic Settings."""
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -35,3 +35,36 @@ class Settings(BaseSettings):
     api_host: str = Field(default="0.0.0.0", description="API server host")
     api_port: int = Field(default=8000, description="API server port")
     cors_origins: list[str] = Field(default=["http://localhost:5173"], description="CORS allowed origins")
+
+    elasticsearch_url: str = Field(
+        default="",
+        description="Elasticsearch base URL (e.g. http://localhost:9200)",
+        validation_alias=AliasChoices("REPOMAN_ELASTICSEARCH_URL", "ELASTICSEARCH_URL"),
+    )
+    elasticsearch_api_key: str = Field(
+        default="",
+        description="Elasticsearch API key",
+        validation_alias=AliasChoices("REPOMAN_ELASTICSEARCH_API_KEY", "ELASTICSEARCH_API_KEY"),
+    )
+    elasticsearch_cloud_id: str = Field(
+        default="",
+        description="Elasticsearch Cloud ID",
+        validation_alias=AliasChoices("REPOMAN_ELASTICSEARCH_CLOUD_ID", "ELASTICSEARCH_CLOUD_ID"),
+    )
+
+    github_token: str = Field(
+        default="",
+        description="GitHub personal access token",
+        validation_alias=AliasChoices("REPOMAN_GITHUB_TOKEN", "GITHUB_TOKEN"),
+    )
+
+    embedding_model: str = Field(
+        default="all-MiniLM-L6-v2",
+        description="Embedding model identifier (used by the selected embedding provider)",
+        validation_alias=AliasChoices("REPOMAN_EMBEDDING_MODEL", "EMBEDDING_MODEL"),
+    )
+    embedding_provider: str = Field(
+        default="hash",
+        description="Embedding provider: 'hash' (default) or 'sentence_transformers'",
+        validation_alias=AliasChoices("REPOMAN_EMBEDDING_PROVIDER", "EMBEDDING_PROVIDER"),
+    )

@@ -1,0 +1,28 @@
+{
+  "mappings": {
+    "properties": {
+      "issue_id": {"type": "keyword"},
+      "repo_full_name": {"type": "keyword"},
+      "title": {"type": "text"},
+      "body": {"type": "text"},
+      "body_embedding": {
+        "type": "dense_vector",
+        "dims": 384,
+        "index": true,
+        "similarity": "cosine"
+      },
+      "state": {"type": "keyword"},
+      "labels": {"type": "keyword"},
+      "is_pull_request": {"type": "boolean"},
+      "author": {"type": "keyword"},
+      "assignees": {"type": "keyword"},
+      "created_at": {"type": "date"},
+      "updated_at": {"type": "date"},
+      "closed_at": {"type": "date"},
+      "days_open": {"type": "integer"},
+      "comment_count": {"type": "integer"},
+      "sentiment": {"type": "keyword"},
+      "is_stale": {"type": "boolean"}
+    }
+  }
+}
