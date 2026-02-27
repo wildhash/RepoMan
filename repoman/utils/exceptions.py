@@ -16,6 +16,9 @@ def reraise_if_fatal(exc: BaseException) -> None:
 
     Note: this function does not log; call sites are expected to log any context
     before invoking it.
+
+    Pass the original exception instance through; avoid wrapping `CancelledError`
+    into another exception type before calling this helper.
     """
 
     if isinstance(exc, asyncio.CancelledError):

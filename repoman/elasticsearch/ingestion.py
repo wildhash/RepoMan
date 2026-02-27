@@ -14,7 +14,7 @@ from repoman.analysis.direction import assess_repo_direction
 from repoman.analysis.duplicates import DuplicateIssueGroup, find_duplicate_issue_groups
 from repoman.analysis.recommendations import ActionItem, generate_action_items
 from repoman.analysis.staleness import StaleCounts, query_stale_counts
-from repoman.config import Settings
+from repoman.config import MAX_GITHUB_ISSUE_INGEST_LIMIT, MIN_GITHUB_ISSUE_INGEST_LIMIT, Settings
 from repoman.elasticsearch.constants import ANALYSIS_DATA_STREAM, ISSUES_INDEX, REPOSITORIES_INDEX
 from repoman.elasticsearch.indexer import bulk_index
 from repoman.embeddings.encoder import EmbeddingEncoder, create_encoder
@@ -146,9 +146,13 @@ class ElasticsearchIngestionService:
         await self._es.index(index=REPOSITORIES_INDEX, id=repo_doc["repo_id"], document=repo_doc, refresh=False)
 
         # Issues/PRs
-        effective_issues_limit = (
-            self._config.github_issue_ingest_limit if issues_limit is None else issues_limit
-        )
+        if issues_limit is None:
+            effective_issues_limit = self._config.github_issue_ingest_limit
+        else:
+            effective_issues_limit = max(
+                MIN_GITHUB_ISSUE_INGEST_LIMIT,
+                min(issues_limit, MAX_GITHUB_ISSUE_INGEST_LIMIT),
+            )
         issues = await self._github.list_issues(
             repo_full_name,
             state="all",

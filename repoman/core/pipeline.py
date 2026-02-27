@@ -98,15 +98,17 @@ class Pipeline:
                 *[t for _, t in audit_tasks],
                 return_exceptions=True,
             )
+            failed_audit_agents: list[str] = []
             for (agent_name, _), audit_result in zip(audit_tasks, audit_results):
                 if isinstance(audit_result, BaseException):
+                    failed_audit_agents.append(agent_name)
                     reraise_if_fatal(audit_result)
                     log.warning("audit_failed", agent=agent_name, error=str(audit_result))
                     continue
                 state.audit_reports.append(audit_result)
 
             if not state.audit_reports:
-                raise RuntimeError("All audit agents failed")
+                raise RuntimeError(f"All audit agents failed (agents: {', '.join(failed_audit_agents)})")
             await emit(
                 "phase_completed",
                 {"phase": Phase.audit.value, "reports": len(state.audit_reports)},
@@ -152,8 +154,10 @@ class Pipeline:
             )
             rejections: list[str] = []
             successful_reviews = 0
+            failed_review_agents: list[str] = []
             for (agent_name, _), review in zip(review_tasks, review_results):
                 if isinstance(review, BaseException):
+                    failed_review_agents.append(agent_name)
                     reraise_if_fatal(review)
                     log.warning("review_failed", agent=agent_name, error=str(review))
                     continue
@@ -162,7 +166,7 @@ class Pipeline:
                     rejections.extend(review.get("rejections", []))
 
             if successful_reviews == 0:
-                raise RuntimeError("All review agents failed")
+                raise RuntimeError(f"All review agents failed (agents: {', '.join(failed_review_agents)})")
             if rejections:
                 fix_sets = await self._builder.apply_fixes(rejections, state.snapshot, file_ops)
                 state.change_sets.extend(fix_sets)
