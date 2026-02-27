@@ -3,6 +3,10 @@
 COMPOSE_API_SERVICE ?= api
 DEMO_REPO ?= https://github.com/wildhash/RepoMan
 DEMO_ISSUES_LIMIT ?= 25
+ES_URL ?= http://localhost:9200
+ifneq ($(strip $(REPOMAN_ELASTICSEARCH_URL)),)
+ES_URL := $(REPOMAN_ELASTICSEARCH_URL)
+endif
 
 install:
 	pip install -e ".[dev]"
@@ -33,12 +37,12 @@ docker-down:
 
 wait-es:
 	@for i in $$(seq 1 60); do \
-		if curl -fsS "http://localhost:9200" >/dev/null; then \
+		if curl -fsS "$(ES_URL)" >/dev/null; then \
 			exit 0; \
 		fi; \
 		sleep 2; \
 	done; \
-	echo "Elasticsearch did not start" >&2; \
+	echo "Elasticsearch did not start at $(ES_URL)" >&2; \
 	exit 1
 
 demo: docker-up wait-es

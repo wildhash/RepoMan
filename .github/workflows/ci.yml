@@ -2,7 +2,7 @@ name: CI
 
 env:
   ELASTICSEARCH_VERSION: 8.13.0
-  ELASTICSEARCH_URL: http://elasticsearch:9200
+  REPOMAN_ELASTICSEARCH_URL: http://elasticsearch:9200
 
 on:
   push:
@@ -63,7 +63,7 @@ jobs:
       - name: Wait for Elasticsearch
         run: |
           for i in $(seq 1 60); do
-            if curl -fsS "$ELASTICSEARCH_URL" >/dev/null; then
+            if curl -fsS "$REPOMAN_ELASTICSEARCH_URL" >/dev/null; then
               exit 0
             fi
             sleep 2
@@ -73,7 +73,6 @@ jobs:
 
       - name: Setup indices
         env:
-          REPOMAN_ELASTICSEARCH_URL: ${{ env.ELASTICSEARCH_URL }}
           REPOMAN_EMBEDDING_PROVIDER: hash
           # Matches `.env.example` defaults so we exercise the real mappings in CI.
           REPOMAN_EMBEDDING_DIMS: "384"
@@ -81,7 +80,6 @@ jobs:
 
       - name: Ingest + analyze a repo
         env:
-          REPOMAN_ELASTICSEARCH_URL: ${{ env.ELASTICSEARCH_URL }}
           REPOMAN_EMBEDDING_PROVIDER: hash
           # Uses the ephemeral Actions token and a public repo; for private org tests use a PAT secret instead.
           REPOMAN_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -90,7 +88,7 @@ jobs:
 
       - name: Verify indexed documents
         run: |
-          curl -fsS "$ELASTICSEARCH_URL/repoman-repositories/_count" | \
+          curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-repositories/_count" | \
             python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
-          curl -fsS "$ELASTICSEARCH_URL/repoman-issues/_count" | \
+          curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-issues/_count" | \
             python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
