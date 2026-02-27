@@ -88,6 +88,12 @@ Once your `.env` is configured, you can run:
 make demo
 ```
 
+To ingest PitCrew instead:
+
+```bash
+make demo-pitcrew
+```
+
 If your `docker-compose.yml` service running the CLI isn't named `api`, override it:
 
 ```bash
