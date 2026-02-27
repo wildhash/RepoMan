@@ -88,7 +88,7 @@ class ElasticsearchIngestionService:
                 out_repos.append(full_name)
         return out_repos
 
-    async def ingest_repo(self, repo_input: str) -> dict[str, Any]:
+    async def ingest_repo(self, repo_input: str, *, issues_limit: int | None = None) -> dict[str, Any]:
         """Ingest a single repo and its issues/PRs."""
         repo_full_name = parse_repo_full_name(repo_input)
         repo = await self._github.get_repo(repo_full_name)
@@ -146,11 +146,14 @@ class ElasticsearchIngestionService:
         await self._es.index(index=REPOSITORIES_INDEX, id=repo_doc["repo_id"], document=repo_doc, refresh=False)
 
         # Issues/PRs
+        effective_issues_limit = (
+            self._config.github_issue_ingest_limit if issues_limit is None else issues_limit
+        )
         issues = await self._github.list_issues(
             repo_full_name,
             state="all",
             since=_now() - timedelta(days=365),
-            limit=300,
+            limit=effective_issues_limit,
         )
         issue_docs = issues_to_documents(issues, repo_full_name=repo_full_name, encoder=self._encoder)
 

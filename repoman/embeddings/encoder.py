@@ -1,6 +1,6 @@
 """Embedding generation utilities.
 
-RepoMan's Elasticsearch indices expect 384-dimension vectors.
+RepoMan's Elasticsearch indices expect fixed-dimension vectors (default: 384).
 
 The default provider is a deterministic hash-based encoder so the system can work
 without heavyweight ML dependencies. If you want higher-quality embeddings, set
@@ -20,7 +20,8 @@ from repoman.config import Settings
 
 log = structlog.get_logger()
 
-VECTOR_DIMS = 384
+DEFAULT_VECTOR_DIMS = 384
+VECTOR_DIMS = DEFAULT_VECTOR_DIMS
 
 
 class EmbeddingEncoder:
@@ -38,7 +39,7 @@ class HashEmbeddingEncoder(EmbeddingEncoder):
     vector representation for local development, tests, and lightweight usage.
     """
 
-    dims: int = VECTOR_DIMS
+    dims: int = DEFAULT_VECTOR_DIMS
 
     _token_re = re.compile(r"[A-Za-z0-9_]+")
 
@@ -61,7 +62,7 @@ class HashEmbeddingEncoder(EmbeddingEncoder):
 class SentenceTransformersEncoder(EmbeddingEncoder):
     """Sentence-transformers based encoder."""
 
-    def __init__(self, model_name: str) -> None:
+    def __init__(self, model_name: str, *, dims: int) -> None:
         try:
             from sentence_transformers import SentenceTransformer
         except Exception as exc:  # pragma: no cover
@@ -70,12 +71,13 @@ class SentenceTransformersEncoder(EmbeddingEncoder):
             ) from exc
 
         self._model = SentenceTransformer(model_name)
+        self._dims = dims
 
     def encode(self, text: str) -> list[float]:  # pragma: no cover
         embedding = self._model.encode([text or ""], normalize_embeddings=True)[0]
         vec = embedding.tolist() if hasattr(embedding, "tolist") else list(embedding)
-        if len(vec) != VECTOR_DIMS:
-            raise RuntimeError(f"Expected {VECTOR_DIMS} dims, got {len(vec)}")
+        if len(vec) != self._dims:
+            raise RuntimeError(f"Expected {self._dims} dims, got {len(vec)}")
         return [float(v) for v in vec]
 
 
@@ -84,8 +86,8 @@ def create_encoder(config: Settings) -> EmbeddingEncoder:
     provider = (config.embedding_provider or "hash").strip().lower()
     if provider == "sentence_transformers":
         log.info("embedding_provider", provider=provider, model=config.embedding_model)
-        return SentenceTransformersEncoder(config.embedding_model)
+        return SentenceTransformersEncoder(config.embedding_model, dims=config.embedding_dims)
 
     if provider != "hash":
         log.warning("unknown_embedding_provider", provider=provider, fallback="hash")
-    return HashEmbeddingEncoder()
+    return HashEmbeddingEncoder(dims=config.embedding_dims)

@@ -12,6 +12,7 @@ from repoman.agents.orchestrator_agent import OrchestratorAgent
 from repoman.config import Settings
 from repoman.core.events import EventBus
 from repoman.core.state import AgentAuditReport, AgentVote, ConsensusResult, DebateMessage
+from repoman.utils.exceptions import reraise_if_fatal
 
 log = structlog.get_logger()
 
@@ -62,10 +63,7 @@ class ConsensusEngine:
         plans: dict[str, dict] = {}
         for agent, proposal in zip(agents, proposals):
             if isinstance(proposal, BaseException):
-                if isinstance(proposal, asyncio.CancelledError):
-                    raise proposal
-                if not isinstance(proposal, Exception):
-                    raise proposal
+                reraise_if_fatal(proposal)
                 log.warning("proposal_failed", agent=agent.name, error=str(proposal))
                 plans[agent.name] = {}
             else:
@@ -94,10 +92,7 @@ class ConsensusEngine:
             critiques: dict[str, dict] = {}
             for agent, critique in zip(agents, critiques_list):
                 if isinstance(critique, BaseException):
-                    if isinstance(critique, asyncio.CancelledError):
-                        raise critique
-                    if not isinstance(critique, Exception):
-                        raise critique
+                    reraise_if_fatal(critique)
                     critiques[agent.name] = {}
                 else:
                     critiques[agent.name] = critique
@@ -117,10 +112,7 @@ class ConsensusEngine:
             )
             for agent, revision in zip(agents, revisions):
                 if isinstance(revision, BaseException):
-                    if isinstance(revision, asyncio.CancelledError):
-                        raise revision
-                    if not isinstance(revision, Exception):
-                        raise revision
+                    reraise_if_fatal(revision)
                     continue
 
                 plans[agent.name] = revision
@@ -157,10 +149,7 @@ class ConsensusEngine:
             votes = {}
             for agent, vote in zip(agents, vote_results):
                 if isinstance(vote, BaseException):
-                    if isinstance(vote, asyncio.CancelledError):
-                        raise vote
-                    if not isinstance(vote, Exception):
-                        raise vote
+                    reraise_if_fatal(vote)
                     votes[agent.name] = AgentVote(
                         agent_name=agent.name,
                         score=0.0,

@@ -29,6 +29,9 @@ repoman es ingest https://github.com/wildhash/RepoMan --analyze
 # Or ingest by user/org (top N most recently updated)
 repoman es ingest wildhash --limit 10 --analyze
 
+# Optional: raise the per-repo issues/PRs cap (default: 300)
+repoman es ingest wildhash --limit 10 --issues-limit 1000 --analyze
+
 # Or ingest via GitHub search
 repoman es ingest "language:python stars:>1000 vector database" --limit 10
 ```

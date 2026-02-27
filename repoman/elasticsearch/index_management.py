@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import structlog
 from elasticsearch import AsyncElasticsearch, NotFoundError
@@ -19,12 +20,28 @@ from repoman.elasticsearch.constants import (
 log = structlog.get_logger()
 
 
-def _load_mapping(name: str) -> dict:
+def _apply_vector_dims(obj: Any, vector_dims: int) -> None:
+    if isinstance(obj, dict):
+        if obj.get("type") == "dense_vector" and "dims" in obj:
+            obj["dims"] = vector_dims
+        for v in obj.values():
+            _apply_vector_dims(v, vector_dims)
+        return
+
+    if isinstance(obj, list):
+        for item in obj:
+            _apply_vector_dims(item, vector_dims)
+
+
+def _load_mapping(name: str, *, vector_dims: int | None = None) -> dict:
     path = Path(__file__).parent / "mappings" / f"{name}.json"
-    return json.loads(path.read_text(encoding="utf-8"))
+    body = json.loads(path.read_text(encoding="utf-8"))
+    if vector_dims is not None:
+        _apply_vector_dims(body, vector_dims)
+    return body
 
 
-async def ensure_indices(es: AsyncElasticsearch) -> None:
+async def ensure_indices(es: AsyncElasticsearch, *, vector_dims: int | None = None) -> None:
     """Create indices/data streams required by RepoMan.
 
     Operations are idempotent; existing resources are left untouched.
@@ -32,8 +49,8 @@ async def ensure_indices(es: AsyncElasticsearch) -> None:
     Args:
         es: Elasticsearch client.
     """
-    await _ensure_index(es, REPOSITORIES_INDEX, _load_mapping("repositories"))
-    await _ensure_index(es, ISSUES_INDEX, _load_mapping("issues"))
+    await _ensure_index(es, REPOSITORIES_INDEX, _load_mapping("repositories", vector_dims=vector_dims))
+    await _ensure_index(es, ISSUES_INDEX, _load_mapping("issues", vector_dims=vector_dims))
     await _ensure_analysis_data_stream(es)
 
 

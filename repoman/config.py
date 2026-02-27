@@ -58,6 +58,15 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("REPOMAN_GITHUB_TOKEN", "GITHUB_TOKEN"),
     )
 
+    github_issue_ingest_limit: int = Field(
+        default=300,
+        description="Maximum issues/PRs to ingest per repository",
+        validation_alias=AliasChoices(
+            "REPOMAN_GITHUB_ISSUE_INGEST_LIMIT",
+            "GITHUB_ISSUE_INGEST_LIMIT",
+        ),
+    )
+
     embedding_model: str = Field(
         default="all-MiniLM-L6-v2",
         description="Embedding model identifier (used by the selected embedding provider)",
@@ -67,4 +76,10 @@ class Settings(BaseSettings):
         default="hash",
         description="Embedding provider: 'hash' (default) or 'sentence_transformers'",
         validation_alias=AliasChoices("REPOMAN_EMBEDDING_PROVIDER", "EMBEDDING_PROVIDER"),
+    )
+
+    embedding_dims: int = Field(
+        default=384,
+        description="Embedding vector dimensions (must match Elasticsearch mappings)",
+        validation_alias=AliasChoices("REPOMAN_EMBEDDING_DIMS", "EMBEDDING_DIMS"),
     )

@@ -20,6 +20,7 @@ from repoman.core.state import JobStatus, Phase, PipelineResult, PipelineState
 from repoman.execution.build_runner import ValidationEngine
 from repoman.execution.file_ops import FileOps
 from repoman.models.router import ModelRouter
+from repoman.utils.exceptions import reraise_if_fatal
 
 log = structlog.get_logger()
 
@@ -96,10 +97,7 @@ class Pipeline:
             )
             for audit_result in audit_results:
                 if isinstance(audit_result, BaseException):
-                    if isinstance(audit_result, asyncio.CancelledError):
-                        raise audit_result
-                    if not isinstance(audit_result, Exception):
-                        raise audit_result
+                    reraise_if_fatal(audit_result)
                     continue
                 state.audit_reports.append(audit_result)
             await emit(
@@ -145,10 +143,7 @@ class Pipeline:
             rejections: list[str] = []
             for review in review_results:
                 if isinstance(review, BaseException):
-                    if isinstance(review, asyncio.CancelledError):
-                        raise review
-                    if not isinstance(review, Exception):
-                        raise review
+                    reraise_if_fatal(review)
                     continue
                 if isinstance(review, dict) and not review.get("approved", True):
                     rejections.extend(review.get("rejections", []))

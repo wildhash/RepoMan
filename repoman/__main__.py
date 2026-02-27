@@ -12,6 +12,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from repoman.config import Settings
+from repoman.utils.exceptions import reraise_if_fatal
 from repoman.utils.logging import configure_logging
 
 app = typer.Typer(name="repoman", help="Multi-model agentic repository transformation system")
@@ -89,10 +90,7 @@ def audit(
 
         for report in reports:
             if isinstance(report, BaseException):
-                if isinstance(report, asyncio.CancelledError):
-                    raise report
-                if not isinstance(report, Exception):
-                    raise report
+                reraise_if_fatal(report)
                 console.print(f"[red]Audit failed: {report}[/red]")
                 continue
             console.print(Panel(
@@ -130,7 +128,7 @@ def es_setup() -> None:
 
         es = create_es_client(settings)
         try:
-            await ensure_indices(es)
+            await ensure_indices(es, vector_dims=settings.embedding_dims)
             console.print("[green]Elasticsearch indices ensured.[/green]")
         finally:
             await es.close()
@@ -142,6 +140,7 @@ def es_setup() -> None:
 def es_ingest(
     input_value: str = typer.Argument(..., help="Repo URL, owner/repo, user/org, or GitHub search query"),
     limit: int = typer.Option(20, "--limit", help="Max repos for user/org/search inputs"),
+    issues_limit: int | None = typer.Option(None, "--issues-limit", help="Max issues/PRs to ingest per repo"),
     analyze: bool = typer.Option(False, "--analyze", help="Run analysis after ingestion"),
 ) -> None:
     """Ingest GitHub data into Elasticsearch."""
@@ -156,14 +155,14 @@ def es_ingest(
         es = create_es_client(settings)
         service = ElasticsearchIngestionService(settings, es=es)
         try:
-            await ensure_indices(es)
+            await ensure_indices(es, vector_dims=settings.embedding_dims)
             repos = await service.ingest_input(input_value, limit=limit)
             if not repos:
                 console.print("[yellow]No repositories found.[/yellow]")
                 return
 
             for repo_full_name in repos:
-                result = await service.ingest_repo(repo_full_name)
+                result = await service.ingest_repo(repo_full_name, issues_limit=issues_limit)
                 console.print(
                     f"[cyan]{repo_full_name}[/cyan] indexed: issues={result['issues_indexed']} health={result['health_score']}"
                 )
