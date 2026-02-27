@@ -61,7 +61,8 @@ class Settings(BaseSettings):
     github_issue_ingest_limit: int = Field(
         default=300,
         ge=1,
-        description="Maximum issues/PRs to ingest per repository",
+        le=5000,
+        description="Maximum issues/PRs to ingest per repository (safety cap)",
         validation_alias=AliasChoices(
             "REPOMAN_GITHUB_ISSUE_INGEST_LIMIT",
             "GITHUB_ISSUE_INGEST_LIMIT",

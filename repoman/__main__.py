@@ -144,6 +144,7 @@ def es_ingest(
         None,
         "--issues-limit",
         min=1,
+        max=5000,
         help="Max issues/PRs to ingest per repo",
     ),
     analyze: bool = typer.Option(False, "--analyze", help="Run analysis after ingestion"),
