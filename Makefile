@@ -52,8 +52,9 @@ demo: docker-up wait-es
 	docker compose exec -T $(COMPOSE_API_SERVICE) repoman es setup
 	docker compose exec -T $(COMPOSE_API_SERVICE) repoman es ingest $(DEMO_REPO) --issues-limit $(DEMO_ISSUES_LIMIT) --analyze
 
-demo-pitcrew:
-	$(MAKE) demo DEMO_REPO=https://github.com/wildhash/pitcrew DEMO_ISSUES_LIMIT=200
+demo-pitcrew: DEMO_REPO := https://github.com/wildhash/pitcrew
+demo-pitcrew: DEMO_ISSUES_LIMIT := 200
+demo-pitcrew: demo
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

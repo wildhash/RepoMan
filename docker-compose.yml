@@ -11,7 +11,7 @@ services:
     volumes:
       - repoman_esdata:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:9200 >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s' >/dev/null || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 60
@@ -33,7 +33,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_PROXY_TARGET=http://api:8000
+      - REPOMAN_DEV_PROXY_TARGET=http://api:8000
     depends_on:
       - api
 

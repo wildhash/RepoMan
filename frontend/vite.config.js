@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const apiTarget = process.env.VITE_PROXY_TARGET ?? 'http://localhost:8000'
+const apiTarget = process.env.REPOMAN_DEV_PROXY_TARGET ?? 'http://localhost:8000'
 const apiUrl = new URL(apiTarget)
 const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
 const wsTarget = `${wsProtocol}//${apiUrl.host}`
