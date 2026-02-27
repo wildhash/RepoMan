@@ -30,6 +30,8 @@ If you already have a different `repoman` package installed from PyPI, uninstall
 pip uninstall repoman
 ```
 
+If you see import errors or unexpected CLI behavior after installing, double-check that you don’t still have an unrelated `repoman` package installed.
+
 ## MVP scope
 
 **Works today**
@@ -37,6 +39,14 @@ pip uninstall repoman
 - [x] Ingest GitHub repos/issues/PRs into Elasticsearch (`repoman es ingest`)
 - [x] Repo health scoring + dashboards backed by Elasticsearch
 - [x] A multi-agent consensus loop (requires LLM API keys)
+
+**Entry points (stable vs experimental)**
+
+- Stable:
+  - `repoman es setup`, `repoman es ingest`
+  - `repoman serve` + `/api/search/*`, `/api/dashboard/*`
+- Experimental:
+  - `repoman audit`, `repoman transform` (LLM-backed; sandbox/validation is still evolving)
 
 **Roadmap / WIP**
 
