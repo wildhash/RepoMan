@@ -31,7 +31,7 @@ class CICDGenerator:
         prompt = f"""Generate a GitHub Actions CI workflow for this repository.
 
 Language: {snapshot.primary_language}
-Frameworks: {', '.join(snapshot.frameworks)}
+Frameworks: {", ".join(snapshot.frameworks)}
 Has tests: {snapshot.has_tests}
 
 Return only the YAML content for .github/workflows/ci.yml."""
@@ -54,7 +54,7 @@ Return only the YAML content for .github/workflows/ci.yml."""
         prompt = f"""Generate a production-ready Dockerfile for this repository.
 
 Language: {snapshot.primary_language}
-Entry points: {', '.join(snapshot.entry_points)}
+Entry points: {", ".join(snapshot.entry_points)}
 
 Use multi-stage build if appropriate. Return only the Dockerfile content."""
 

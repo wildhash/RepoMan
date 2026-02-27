@@ -31,5 +31,7 @@ class StrategyOptimizer:
             return ""
         lines = ["Relevant patterns from past runs:"]
         for p in patterns[:5]:
-            lines.append(f"- [{p.get('severity', '?')}] {p.get('description', '')}: {p.get('suggested_fix', '')}")
+            lines.append(
+                f"- [{p.get('severity', '?')}] {p.get('description', '')}: {p.get('suggested_fix', '')}"
+            )
         return "\n".join(lines)

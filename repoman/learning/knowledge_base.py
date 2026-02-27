@@ -53,13 +53,17 @@ class KnowledgeBase:
                     self._patterns.upsert(
                         ids=[issue.id],
                         documents=[issue.description],
-                        metadatas=[{
-                            "language": result.before_snapshot.primary_language if result.before_snapshot else "",
-                            "category": issue.category,
-                            "severity": issue.severity,
-                            "suggested_fix": issue.suggested_fix,
-                            "success": result.status.value == "completed",
-                        }],
+                        metadatas=[
+                            {
+                                "language": result.before_snapshot.primary_language
+                                if result.before_snapshot
+                                else "",
+                                "category": issue.category,
+                                "severity": issue.severity,
+                                "suggested_fix": issue.suggested_fix,
+                                "success": result.status.value == "completed",
+                            }
+                        ],
                     )
 
             if result.consensus and result.after_score > result.before_score:
@@ -67,11 +71,15 @@ class KnowledgeBase:
                 self._strategies.upsert(
                     ids=[result.job_id],
                     documents=[plan_str],
-                    metadatas=[{
-                        "language": result.before_snapshot.primary_language if result.before_snapshot else "",
-                        "score_improvement": result.after_score - result.before_score,
-                        "issues_fixed": result.issues_fixed,
-                    }],
+                    metadatas=[
+                        {
+                            "language": result.before_snapshot.primary_language
+                            if result.before_snapshot
+                            else "",
+                            "score_improvement": result.after_score - result.before_score,
+                            "issues_fixed": result.issues_fixed,
+                        }
+                    ],
                 )
         except Exception as exc:
             log.warning("learn_from_run_failed", error=str(exc))

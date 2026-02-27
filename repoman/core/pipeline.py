@@ -51,6 +51,7 @@ class Pipeline:
         if config.learning_enabled:
             try:
                 from repoman.learning.knowledge_base import KnowledgeBase
+
                 self._knowledge_base = KnowledgeBase(config)
             except Exception as exc:
                 log.warning("knowledge_base_disabled", error=str(exc))
@@ -108,7 +109,9 @@ class Pipeline:
                 state.audit_reports.append(audit_result)
 
             if not state.audit_reports:
-                raise RuntimeError(f"All audit agents failed (agents: {', '.join(failed_audit_agents)})")
+                raise RuntimeError(
+                    f"All audit agents failed (agents: {', '.join(failed_audit_agents)})"
+                )
             await emit(
                 "phase_completed",
                 {"phase": Phase.audit.value, "reports": len(state.audit_reports)},
@@ -166,7 +169,9 @@ class Pipeline:
                     rejections.extend(review.get("rejections", []))
 
             if successful_reviews == 0:
-                raise RuntimeError(f"All review agents failed (agents: {', '.join(failed_review_agents)})")
+                raise RuntimeError(
+                    f"All review agents failed (agents: {', '.join(failed_review_agents)})"
+                )
             if rejections:
                 fix_sets = await self._builder.apply_fixes(rejections, state.snapshot, file_ops)
                 state.change_sets.extend(fix_sets)
@@ -207,7 +212,9 @@ class Pipeline:
         await emit("pipeline_completed", {"status": state.status.value})
         return result
 
-    def _build_result(self, state: PipelineState, start_time: float, status: JobStatus) -> PipelineResult:
+    def _build_result(
+        self, state: PipelineState, start_time: float, status: JobStatus
+    ) -> PipelineResult:
         """Construct a PipelineResult from the current pipeline state.
 
         Args:
@@ -221,8 +228,7 @@ class Pipeline:
         before_score = state.snapshot.health_score if state.snapshot else 0.0
         after_score = state.validation.health_score if state.validation else before_score
         issues_fixed = sum(
-            len(r.critical_issues) + len(r.major_issues)
-            for r in state.audit_reports
+            len(r.critical_issues) + len(r.major_issues) for r in state.audit_reports
         )
 
         return PipelineResult(

@@ -49,7 +49,9 @@ async def ensure_indices(es: AsyncElasticsearch, *, vector_dims: int) -> None:
     Args:
         es: Elasticsearch client.
     """
-    await _ensure_index(es, REPOSITORIES_INDEX, _load_mapping("repositories", vector_dims=vector_dims))
+    await _ensure_index(
+        es, REPOSITORIES_INDEX, _load_mapping("repositories", vector_dims=vector_dims)
+    )
     await _ensure_index(es, ISSUES_INDEX, _load_mapping("issues", vector_dims=vector_dims))
     await _ensure_analysis_data_stream(es, vector_dims=vector_dims)
 

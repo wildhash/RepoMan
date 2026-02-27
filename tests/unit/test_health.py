@@ -55,8 +55,12 @@ class TestInitialHealthScore:
     def test_score_never_exceeds_100(self) -> None:
         """Score should never exceed 100."""
         s = make_snapshot(
-            has_readme=True, has_tests=True, has_ci=True,
-            has_dockerfile=True, has_license=True, has_env_example=True,
+            has_readme=True,
+            has_tests=True,
+            has_ci=True,
+            has_dockerfile=True,
+            has_license=True,
+            has_env_example=True,
             total_files=50,
         )
         assert compute_initial_health_score(s) <= 100.0
@@ -67,14 +71,36 @@ class TestWeightedScore:
 
     def test_all_tens(self) -> None:
         """All dimensions at 10 should give overall 10."""
-        dims = {k: 10.0 for k in ["architecture", "code_quality", "test_coverage", "security",
-                                    "documentation", "performance", "maintainability", "deployment_readiness"]}
+        dims = {
+            k: 10.0
+            for k in [
+                "architecture",
+                "code_quality",
+                "test_coverage",
+                "security",
+                "documentation",
+                "performance",
+                "maintainability",
+                "deployment_readiness",
+            ]
+        }
         assert compute_weighted_score(dims) == pytest.approx(10.0)
 
     def test_all_zeros(self) -> None:
         """All dimensions at 0 should give overall 0."""
-        dims = {k: 0.0 for k in ["architecture", "code_quality", "test_coverage", "security",
-                                   "documentation", "performance", "maintainability", "deployment_readiness"]}
+        dims = {
+            k: 0.0
+            for k in [
+                "architecture",
+                "code_quality",
+                "test_coverage",
+                "security",
+                "documentation",
+                "performance",
+                "maintainability",
+                "deployment_readiness",
+            ]
+        }
         assert compute_weighted_score(dims) == pytest.approx(0.0)
 
     def test_empty_dims_returns_default(self) -> None:

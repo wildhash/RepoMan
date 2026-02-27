@@ -83,7 +83,9 @@ def compute_community_score(stars: int, forks: int, contributors: int) -> float:
     return round(min(max(score, 0.0), 100.0), 2)
 
 
-def compute_completeness_score(*, readme_text: str | None, has_license: bool, has_contributing: bool) -> float:
+def compute_completeness_score(
+    *, readme_text: str | None, has_license: bool, has_contributing: bool
+) -> float:
     readme_ok = bool(readme_text and len(readme_text.strip()) >= 500)
     present = sum([readme_ok, has_license, has_contributing])
     return round((present / 3.0) * 100.0, 2)
@@ -145,7 +147,11 @@ def issues_to_documents(
             for label in (item.get("labels") or [])
             if isinstance(label, dict) and label.get("name")
         ]
-        assignees = [a.get("login") for a in (item.get("assignees") or []) if isinstance(a, dict) and a.get("login")]
+        assignees = [
+            a.get("login")
+            for a in (item.get("assignees") or [])
+            if isinstance(a, dict) and a.get("login")
+        ]
         body = item.get("body") or ""
 
         out.append(
@@ -166,7 +172,8 @@ def issues_to_documents(
                 "days_open": days_open,
                 "comment_count": int(item.get("comments") or 0),
                 "sentiment": classify_issue_sentiment(f"{item.get('title') or ''}\n{body}"),
-                "is_stale": (item.get("state") == "open") and ((now_dt - updated_at) >= timedelta(days=30)),
+                "is_stale": (item.get("state") == "open")
+                and ((now_dt - updated_at) >= timedelta(days=30)),
             }
         )
 

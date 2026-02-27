@@ -1,5 +1,10 @@
 name: CI
 
+env:
+  ELASTICSEARCH_VERSION: 8.13.0 # Keep in sync with docker-compose.yml
+  REPOMAN_ELASTICSEARCH_URL: http://elasticsearch:9200
+  REPOMAN_SMOKE_REPO: ${{ github.repository }}
+
 on:
   push:
     branches: [main, "copilot/**"]
@@ -24,5 +29,73 @@ jobs:
       - name: Lint with ruff
         run: ruff check repoman tests
 
+      - name: Check formatting
+        run: ruff format --check repoman tests
+
       - name: Run unit tests
         run: pytest tests/unit -v --tb=short
+
+  es-smoke:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+    runs-on: ubuntu-latest
+
+    # This job uses a dedicated Elasticsearch service container, so any indices it creates
+    # are ephemeral to this job run.
+
+    services:
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:${{ env.ELASTICSEARCH_VERSION }}
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          xpack.security.http.ssl.enabled: "false"
+          ES_JAVA_OPTS: -Xms512m -Xmx512m
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install ".[dev]"
+
+      - name: Wait for Elasticsearch
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS "$REPOMAN_ELASTICSEARCH_URL" >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Elasticsearch did not start" >&2
+          exit 1
+
+      - name: Setup indices
+        env:
+          REPOMAN_EMBEDDING_PROVIDER: hash
+          # Matches `.env.example` defaults so we exercise the real mappings in CI.
+          REPOMAN_EMBEDDING_DIMS: "384"
+        run: repoman es setup
+
+      - name: Ingest + analyze a repo
+        env:
+          REPOMAN_EMBEDDING_PROVIDER: hash
+          # Uses the ephemeral Actions token and a public repo; for private org tests use a PAT secret instead.
+          REPOMAN_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOMAN_EMBEDDING_DIMS: "384"
+        run: repoman es ingest "$REPOMAN_SMOKE_REPO" --issues-limit 5 --analyze
+
+      - name: Verify indexed documents
+        run: |
+          curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-repositories/_count" | \
+            python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
+          curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-issues/_count" | \
+            python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
+
+          curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-repositories/_search" \
+            -H 'Content-Type: application/json' \
+            -d '{"size":10,"_source":["full_name"],"query":{"match_all":{}}}' | \
+            python -c 'import json,os,sys; repo=os.environ["REPOMAN_SMOKE_REPO"]; hits=json.load(sys.stdin)["hits"]["hits"]; assert any((h.get("_source") or {}).get("full_name")==repo for h in hits), f"Expected repo not found: {repo}"'

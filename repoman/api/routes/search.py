@@ -32,7 +32,9 @@ async def search_repositories(
     request: Request,
     q: str = Query(..., description="Query string (full-text)"),
     language: str | None = Query(None, description="Filter by primary language"),
-    status: str | None = Query(None, description="Filter by status (active/stale/abandoned/needs_attention)"),
+    status: str | None = Query(
+        None, description="Filter by status (active/stale/abandoned/needs_attention)"
+    ),
     has_readme: bool | None = Query(None, description="Filter by README presence"),
     health_score_min: float | None = Query(None, description="Minimum health score"),
     health_score_max: float | None = Query(None, description="Maximum health score"),
@@ -128,7 +130,9 @@ async def search_issues(
 
 
 @router.post("/semantic/repositories", response_model=SearchResponse)
-async def semantic_search_repositories(request: Request, body: SemanticSearchRequest) -> SearchResponse:
+async def semantic_search_repositories(
+    request: Request, body: SemanticSearchRequest
+) -> SearchResponse:
     """Semantic repository search using kNN over `description_embedding`.
 
     Example:

@@ -80,7 +80,12 @@ class BaseAgent(ABC):
         except json.JSONDecodeError:
             # Attempt to re-prompt once
             messages.append(Message(role="assistant", content=response.content))
-            messages.append(Message(role="user", content="Your response was not valid JSON. Please return only a valid JSON object."))
+            messages.append(
+                Message(
+                    role="user",
+                    content="Your response was not valid JSON. Please return only a valid JSON object.",
+                )
+            )
             retry = await self._router.complete_json(self.role, messages, self._system_prompt)
             retry_content = retry.content.strip()
             retry_content = re.sub(r"^```(?:json)?\s*", "", retry_content)
@@ -144,9 +149,7 @@ class BaseAgent(ABC):
         """
 
     @abstractmethod
-    async def review_changes(
-        self, change_sets: list[ChangeSet], snapshot: RepoSnapshot
-    ) -> dict:
+    async def review_changes(self, change_sets: list[ChangeSet], snapshot: RepoSnapshot) -> dict:
         """Review applied change sets and approve or reject.
 
         Args:

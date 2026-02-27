@@ -34,7 +34,9 @@ def transform(
         from repoman.core.pipeline import Pipeline
 
         pipeline = Pipeline(settings)
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+        with Progress(
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
+        ) as progress:
             task = progress.add_task("Transforming repository...", total=None)
             result = await pipeline.run(repo_url)
             progress.update(task, description="Done!")
@@ -48,7 +50,10 @@ def transform(
         table.add_row("After Score", f"{result.after_score:.1f}")
         table.add_row("Issues Fixed", str(result.issues_fixed))
         table.add_row("Duration", f"{result.total_duration_seconds:.1f}s")
-        table.add_row("Consensus", "Achieved" if (result.consensus and result.consensus.achieved) else "Forced")
+        table.add_row(
+            "Consensus",
+            "Achieved" if (result.consensus and result.consensus.achieved) else "Forced",
+        )
         console.print(table)
 
         if result.error:
@@ -75,7 +80,9 @@ def audit(
         router = ModelRouter(settings)
         ingester = RepoIngester(settings)
 
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+        with Progress(
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
+        ) as progress:
             task = progress.add_task("Cloning and analysing...", total=None)
             snapshot = await ingester.ingest(repo_url)
             progress.update(task, description="Running audits...")
@@ -93,10 +100,12 @@ def audit(
                 reraise_if_fatal(report)
                 console.print(f"[red]Audit failed: {report}[/red]")
                 continue
-            console.print(Panel(
-                f"Critical: {len(report.critical_issues)} | Major: {len(report.major_issues)} | Score: {report.overall_score:.1f}\n\n{report.executive_summary}",
-                title=f"[bold]{report.agent_name}[/bold] ({report.agent_role})",
-            ))
+            console.print(
+                Panel(
+                    f"Critical: {len(report.critical_issues)} | Major: {len(report.major_issues)} | Score: {report.overall_score:.1f}\n\n{report.executive_summary}",
+                    title=f"[bold]{report.agent_name}[/bold] ({report.agent_role})",
+                )
+            )
 
     asyncio.run(_run())
 
@@ -138,7 +147,9 @@ def es_setup() -> None:
 
 @es_app.command("ingest")
 def es_ingest(
-    input_value: str = typer.Argument(..., help="Repo URL, owner/repo, user/org, or GitHub search query"),
+    input_value: str = typer.Argument(
+        ..., help="Repo URL, owner/repo, user/org, or GitHub search query"
+    ),
     limit: int = typer.Option(20, "--limit", help="Max repos for user/org/search inputs"),
     issues_limit: int | None = typer.Option(
         None,

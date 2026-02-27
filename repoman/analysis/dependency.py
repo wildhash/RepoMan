@@ -29,7 +29,13 @@ def parse_dependencies(clone_path: str) -> list[dict]:
                     continue
                 match = re.match(r"([A-Za-z0-9_\-\.]+)([><=!~^]+.*)?", line)
                 if match:
-                    deps.append({"name": match.group(1), "version": (match.group(2) or "").strip(), "type": dep_type})
+                    deps.append(
+                        {
+                            "name": match.group(1),
+                            "version": (match.group(2) or "").strip(),
+                            "type": dep_type,
+                        }
+                    )
 
     # JavaScript — package.json
     pkg_file = root / "package.json"
@@ -57,7 +63,9 @@ def parse_dependencies(clone_path: str) -> list[dict]:
             if in_deps:
                 match = re.match(r'(\S+)\s*=\s*"([^"]+)"', line)
                 if match:
-                    deps.append({"name": match.group(1), "version": match.group(2), "type": "runtime"})
+                    deps.append(
+                        {"name": match.group(1), "version": match.group(2), "type": "runtime"}
+                    )
 
     # Go — go.mod
     go_mod = root / "go.mod"
@@ -65,6 +73,8 @@ def parse_dependencies(clone_path: str) -> list[dict]:
         for line in go_mod.read_text(encoding="utf-8", errors="ignore").splitlines():
             match = re.match(r"\s+([^\s]+)\s+v([^\s]+)", line)
             if match:
-                deps.append({"name": match.group(1), "version": f"v{match.group(2)}", "type": "runtime"})
+                deps.append(
+                    {"name": match.group(1), "version": f"v{match.group(2)}", "type": "runtime"}
+                )
 
     return deps

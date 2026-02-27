@@ -33,7 +33,7 @@ class ArchitectAgent(BaseAgent):
 
 Repository: {snapshot.url}
 Primary language: {snapshot.primary_language}
-Frameworks: {', '.join(snapshot.frameworks)}
+Frameworks: {", ".join(snapshot.frameworks)}
 Files: {len(snapshot.file_tree)}
 Has README: {snapshot.has_readme}
 Has tests: {snapshot.has_tests}
@@ -69,18 +69,21 @@ Return a JSON object with exactly this structure:
         Returns:
             AgentAuditReport instance.
         """
+
         def parse_issues(raw: list) -> list[Issue]:
             issues = []
             for item in raw:
                 if isinstance(item, dict):
-                    issues.append(Issue(
-                        severity=item.get("severity", "minor"),
-                        category=item.get("category", "architecture"),
-                        file_path=item.get("file_path"),
-                        line_number=item.get("line_number"),
-                        description=item.get("description", ""),
-                        suggested_fix=item.get("suggested_fix", ""),
-                    ))
+                    issues.append(
+                        Issue(
+                            severity=item.get("severity", "minor"),
+                            category=item.get("category", "architecture"),
+                            file_path=item.get("file_path"),
+                            line_number=item.get("line_number"),
+                            description=item.get("description", ""),
+                            suggested_fix=item.get("suggested_fix", ""),
+                        )
+                    )
             return issues
 
         return AgentAuditReport(
@@ -109,9 +112,7 @@ Return a JSON object with exactly this structure:
         Returns:
             Plan dictionary.
         """
-        summaries = "\n".join(
-            f"- {r.agent_name}: {r.executive_summary}" for r in audit_reports
-        )
+        summaries = "\n".join(f"- {r.agent_name}: {r.executive_summary}" for r in audit_reports)
         prompt = f"""Based on these audit findings, propose an architectural improvement plan.
 
 Audit summaries:
@@ -185,9 +186,7 @@ Return JSON with: agent_name (str), score (float 0-10), approve (bool), blocking
             rationale=data.get("rationale", ""),
         )
 
-    async def review_changes(
-        self, change_sets: list[ChangeSet], snapshot: RepoSnapshot
-    ) -> dict:
+    async def review_changes(self, change_sets: list[ChangeSet], snapshot: RepoSnapshot) -> dict:
         """Review applied changes from an architectural perspective.
 
         Args:

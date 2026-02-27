@@ -74,18 +74,21 @@ Return a JSON object with:
         Returns:
             AgentAuditReport instance.
         """
+
         def parse_issues(raw: list) -> list[Issue]:
             issues = []
             for item in raw:
                 if isinstance(item, dict):
-                    issues.append(Issue(
-                        severity=item.get("severity", "minor"),
-                        category=item.get("category", "docs"),
-                        file_path=item.get("file_path"),
-                        line_number=item.get("line_number"),
-                        description=item.get("description", ""),
-                        suggested_fix=item.get("suggested_fix", ""),
-                    ))
+                    issues.append(
+                        Issue(
+                            severity=item.get("severity", "minor"),
+                            category=item.get("category", "docs"),
+                            file_path=item.get("file_path"),
+                            line_number=item.get("line_number"),
+                            description=item.get("description", ""),
+                            suggested_fix=item.get("suggested_fix", ""),
+                        )
+                    )
             return issues
 
         return AgentAuditReport(
@@ -114,11 +117,7 @@ Return a JSON object with:
         Returns:
             Plan dictionary.
         """
-        new_files = [
-            item
-            for report in audit_reports
-            for item in report.new_files_needed
-        ]
+        new_files = [item for report in audit_reports for item in report.new_files_needed]
         prompt = f"""Propose an implementation plan: new files, tests, docs, and CI/CD setup.
 
 New files needed across all audits:
@@ -191,9 +190,7 @@ Return JSON with: agent_name (str), score (float 0-10), approve (bool), blocking
             rationale=data.get("rationale", ""),
         )
 
-    async def review_changes(
-        self, change_sets: list[ChangeSet], snapshot: RepoSnapshot
-    ) -> dict:
+    async def review_changes(self, change_sets: list[ChangeSet], snapshot: RepoSnapshot) -> dict:
         """Review applied changes for implementation quality.
 
         Args:
@@ -203,9 +200,7 @@ Return JSON with: agent_name (str), score (float 0-10), approve (bool), blocking
         Returns:
             Review result with 'approved' bool and 'rejections' list.
         """
-        changes_summary = "\n".join(
-            f"- {cs.step_name}: {cs.summary}" for cs in change_sets
-        )
+        changes_summary = "\n".join(f"- {cs.step_name}: {cs.summary}" for cs in change_sets)
         prompt = f"""Review these changes for implementation quality and completeness.
 
 Changes:
@@ -241,9 +236,9 @@ Return JSON with: approved (bool), rejections (list of str), concerns (list of s
             step = steps[step_name]
             prompt = f"""Execute this step: {step_name}
 
-Step description: {step.get('description', '')}
-Files to modify: {json.dumps(step.get('files', []))}
-Changes to make: {json.dumps(step.get('changes', []))}
+Step description: {step.get("description", "")}
+Files to modify: {json.dumps(step.get("files", []))}
+Changes to make: {json.dumps(step.get("changes", []))}
 
 Repository: {snapshot.url} ({snapshot.primary_language})
 
@@ -275,10 +270,12 @@ Return a JSON ChangeSet:
                     await file_ops.delete_file(path)
                 change_sets.append(cs)
             except Exception as exc:
-                change_sets.append(ChangeSet(
-                    step_name=step_name,
-                    summary=f"Step failed: {exc}",
-                ))
+                change_sets.append(
+                    ChangeSet(
+                        step_name=step_name,
+                        summary=f"Step failed: {exc}",
+                    )
+                )
 
         return change_sets
 

@@ -49,7 +49,9 @@ async def run_tests(repo_path: str, language: str) -> ValidationResult:
     """
     lang = language.lower()
     if lang == "python":
-        rc, stdout, stderr = await run_command(["python", "-m", "pytest", "--tb=short", "-q"], repo_path)
+        rc, stdout, stderr = await run_command(
+            ["python", "-m", "pytest", "--tb=short", "-q"], repo_path
+        )
     elif lang in ("javascript", "typescript"):
         rc, stdout, stderr = await run_command(["npm", "test", "--", "--watchAll=false"], repo_path)
     elif lang == "rust":
@@ -57,7 +59,9 @@ async def run_tests(repo_path: str, language: str) -> ValidationResult:
     elif lang == "go":
         rc, stdout, stderr = await run_command(["go", "test", "./..."], repo_path)
     else:
-        return ValidationResult(check_name="tests", passed=True, output="No test runner for language", details={})
+        return ValidationResult(
+            check_name="tests", passed=True, output="No test runner for language", details={}
+        )
 
     output = stdout + stderr
     return ValidationResult(
