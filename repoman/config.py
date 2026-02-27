@@ -3,6 +3,9 @@
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+MIN_GITHUB_ISSUE_INGEST_LIMIT = 1
+MAX_GITHUB_ISSUE_INGEST_LIMIT = 5000
+
 
 class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
@@ -60,8 +63,8 @@ class Settings(BaseSettings):
 
     github_issue_ingest_limit: int = Field(
         default=300,
-        ge=1,
-        le=5000,
+        ge=MIN_GITHUB_ISSUE_INGEST_LIMIT,
+        le=MAX_GITHUB_ISSUE_INGEST_LIMIT,
         description="Maximum issues/PRs to ingest per repository (safety cap)",
         validation_alias=AliasChoices(
             "REPOMAN_GITHUB_ISSUE_INGEST_LIMIT",

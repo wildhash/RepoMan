@@ -11,7 +11,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from repoman.config import Settings
+from repoman.config import MAX_GITHUB_ISSUE_INGEST_LIMIT, MIN_GITHUB_ISSUE_INGEST_LIMIT, Settings
 from repoman.utils.exceptions import reraise_if_fatal
 from repoman.utils.logging import configure_logging
 
@@ -143,8 +143,8 @@ def es_ingest(
     issues_limit: int | None = typer.Option(
         None,
         "--issues-limit",
-        min=1,
-        max=5000,
+        min=MIN_GITHUB_ISSUE_INGEST_LIMIT,
+        max=MAX_GITHUB_ISSUE_INGEST_LIMIT,
         help="Max issues/PRs to ingest per repo",
     ),
     analyze: bool = typer.Option(False, "--analyze", help="Run analysis after ingestion"),
