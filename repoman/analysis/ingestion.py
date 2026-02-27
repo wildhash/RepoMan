@@ -106,7 +106,7 @@ class RepoIngester:
         has_license = any(f.lower().startswith("license") for f in file_tree)
         has_env_example = any(".env.example" in f or ".env.sample" in f for f in file_tree)
 
-        primary_language = max(languages, key=languages.get, default="")
+        primary_language = max(languages, key=lambda k: languages[k], default="")
 
         snapshot = RepoSnapshot(
             url=repo_url,

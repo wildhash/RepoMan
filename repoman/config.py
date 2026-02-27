@@ -1,7 +1,10 @@
 """RepoMan configuration via Pydantic Settings."""
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+MIN_GITHUB_ISSUE_INGEST_LIMIT = 1
+MAX_GITHUB_ISSUE_INGEST_LIMIT = 5000
 
 
 class Settings(BaseSettings):
@@ -35,3 +38,54 @@ class Settings(BaseSettings):
     api_host: str = Field(default="0.0.0.0", description="API server host")
     api_port: int = Field(default=8000, description="API server port")
     cors_origins: list[str] = Field(default=["http://localhost:5173"], description="CORS allowed origins")
+
+    elasticsearch_url: str = Field(
+        default="",
+        description="Elasticsearch base URL (e.g. http://localhost:9200)",
+        validation_alias=AliasChoices("REPOMAN_ELASTICSEARCH_URL", "ELASTICSEARCH_URL"),
+    )
+    elasticsearch_api_key: str = Field(
+        default="",
+        description="Elasticsearch API key",
+        validation_alias=AliasChoices("REPOMAN_ELASTICSEARCH_API_KEY", "ELASTICSEARCH_API_KEY"),
+    )
+    elasticsearch_cloud_id: str = Field(
+        default="",
+        description="Elasticsearch Cloud ID",
+        validation_alias=AliasChoices("REPOMAN_ELASTICSEARCH_CLOUD_ID", "ELASTICSEARCH_CLOUD_ID"),
+    )
+
+    github_token: str = Field(
+        default="",
+        description="GitHub personal access token",
+        validation_alias=AliasChoices("REPOMAN_GITHUB_TOKEN", "GITHUB_TOKEN"),
+    )
+
+    github_issue_ingest_limit: int = Field(
+        default=300,
+        ge=MIN_GITHUB_ISSUE_INGEST_LIMIT,
+        le=MAX_GITHUB_ISSUE_INGEST_LIMIT,
+        description="Maximum issues/PRs to ingest per repository (safety cap)",
+        validation_alias=AliasChoices(
+            "REPOMAN_GITHUB_ISSUE_INGEST_LIMIT",
+            "GITHUB_ISSUE_INGEST_LIMIT",
+        ),
+    )
+
+    embedding_model: str = Field(
+        default="all-MiniLM-L6-v2",
+        description="Embedding model identifier (used by the selected embedding provider)",
+        validation_alias=AliasChoices("REPOMAN_EMBEDDING_MODEL", "EMBEDDING_MODEL"),
+    )
+    embedding_provider: str = Field(
+        default="hash",
+        description="Embedding provider: 'hash' (default) or 'sentence_transformers'",
+        validation_alias=AliasChoices("REPOMAN_EMBEDDING_PROVIDER", "EMBEDDING_PROVIDER"),
+    )
+
+    embedding_dims: int = Field(
+        default=384,
+        ge=1,
+        description="Embedding vector dimensions (must match Elasticsearch mappings)",
+        validation_alias=AliasChoices("REPOMAN_EMBEDDING_DIMS", "EMBEDDING_DIMS"),
+    )
