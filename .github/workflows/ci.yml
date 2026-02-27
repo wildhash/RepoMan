@@ -33,6 +33,9 @@ jobs:
   es-smoke:
     runs-on: ubuntu-latest
 
+    # This job uses a dedicated Elasticsearch service container, so any indices it creates
+    # are ephemeral to this job run.
+
     services:
       elasticsearch:
         image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
@@ -69,12 +72,16 @@ jobs:
       - name: Setup indices
         env:
           REPOMAN_ELASTICSEARCH_URL: http://localhost:9200
+          REPOMAN_EMBEDDING_PROVIDER: hash
+          # CI uses tiny vectors for speed; the mappings are created with this dims value.
           REPOMAN_EMBEDDING_DIMS: "8"
         run: repoman es setup
 
       - name: Ingest + analyze a repo
         env:
           REPOMAN_ELASTICSEARCH_URL: http://localhost:9200
+          REPOMAN_EMBEDDING_PROVIDER: hash
+          # Uses the ephemeral Actions token and a public repo; for private org tests use a PAT secret instead.
           REPOMAN_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOMAN_EMBEDDING_DIMS: "8"
         run: repoman es ingest wildhash/RepoMan --issues-limit 5 --analyze

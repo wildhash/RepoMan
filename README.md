@@ -8,6 +8,14 @@ GitHub -> ingest -> Elasticsearch -> FastAPI -> dashboards
             +-> agent council (audit -> debate -> execute -> validate) (WIP)
 ```
 
+## Installation (from source)
+
+The Python distribution name is `repoman-ai` (the module/CLI is still `repoman`).
+
+```bash
+pip install -e ".[dev]"
+```
+
 ## MVP scope
 
 **Works today**
@@ -51,6 +59,17 @@ Once your `.env` is configured, you can run:
 
 ```bash
 make demo
+```
+
+`make demo` will bring up the Docker Compose stack, create the Elasticsearch indices, and ingest + analyze this RepoMan repo. After it completes:
+
+- API is at `http://localhost:8000`
+- Frontend is at `http://localhost:5173`
+
+To stop the stack:
+
+```bash
+make docker-down
 ```
 
 ## Ingest + analyze

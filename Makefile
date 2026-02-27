@@ -28,9 +28,9 @@ docker-down:
 	docker compose down
 
 demo:
-	docker compose up --build -d
-	docker compose exec -T api repoman es setup
-	docker compose exec -T api repoman es ingest https://github.com/wildhash/RepoMan --issues-limit 25 --analyze
+	docker compose up --build -d \
+		&& docker compose exec -T api repoman es setup \
+		&& docker compose exec -T api repoman es ingest https://github.com/wildhash/RepoMan --issues-limit 25 --analyze
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
