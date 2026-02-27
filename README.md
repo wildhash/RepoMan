@@ -24,6 +24,12 @@ If/when published to PyPI:
 pip install repoman-ai
 ```
 
+If you already have a different `repoman` package installed from PyPI, uninstall it first:
+
+```bash
+pip uninstall repoman
+```
+
 ## MVP scope
 
 **Works today**
@@ -69,6 +75,12 @@ Once your `.env` is configured, you can run:
 make demo
 ```
 
+If your `docker-compose.yml` service running the CLI isn't named `api`, override it:
+
+```bash
+make demo COMPOSE_API_SERVICE=backend
+```
+
 `make demo` will bring up the Docker Compose stack, create the Elasticsearch indices, and ingest + analyze this RepoMan repo. After it completes:
 
 - API is at `http://localhost:8000`
@@ -79,6 +91,16 @@ To stop the stack:
 ```bash
 make docker-down
 ```
+
+## Dashboards (Elasticsearch)
+
+After ingesting, the core indices/data stream are:
+
+- `repoman-repositories`
+- `repoman-issues`
+- `repoman-analysis` (data stream)
+
+You can explore these directly in Kibana / Elastic Cloud, or use the built-in API dashboard endpoints (see below).
 
 ## Ingest + analyze
 

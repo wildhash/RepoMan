@@ -42,6 +42,8 @@ wait-es:
 	exit 1
 
 demo: docker-up wait-es
+	@echo "Using compose service: $(COMPOSE_API_SERVICE)" >&2
+	@echo "Demo repo: $(DEMO_REPO) (issues-limit=$(DEMO_ISSUES_LIMIT))" >&2
 	docker compose exec -T $(COMPOSE_API_SERVICE) repoman es setup
 	docker compose exec -T $(COMPOSE_API_SERVICE) repoman es ingest $(DEMO_REPO) --issues-limit $(DEMO_ISSUES_LIMIT) --analyze
 
