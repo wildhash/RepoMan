@@ -1,4 +1,4 @@
-.PHONY: install lint test serve docker-up docker-down demo clean
+.PHONY: install lint test serve docker-up docker-down wait-es demo clean
 
 COMPOSE_API_SERVICE ?= api
 DEMO_REPO ?= https://github.com/wildhash/RepoMan
@@ -31,10 +31,19 @@ docker-up:
 docker-down:
 	docker compose down
 
-demo:
-	docker compose up --build -d \
-		&& docker compose exec -T $(COMPOSE_API_SERVICE) repoman es setup \
-		&& docker compose exec -T $(COMPOSE_API_SERVICE) repoman es ingest $(DEMO_REPO) --issues-limit $(DEMO_ISSUES_LIMIT) --analyze
+wait-es:
+	@for i in $$(seq 1 60); do \
+		if curl -fsS "http://localhost:9200" >/dev/null; then \
+			exit 0; \
+		fi; \
+		sleep 2; \
+	done; \
+	echo "Elasticsearch did not start" >&2; \
+	exit 1
+
+demo: docker-up wait-es
+	docker compose exec -T $(COMPOSE_API_SERVICE) repoman es setup
+	docker compose exec -T $(COMPOSE_API_SERVICE) repoman es ingest $(DEMO_REPO) --issues-limit $(DEMO_ISSUES_LIMIT) --analyze
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

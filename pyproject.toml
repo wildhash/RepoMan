@@ -7,6 +7,7 @@ name = "repoman-ai"
 version = "0.1.0"
 description = "Multi-model agentic system that transforms GitHub repositories into enterprise-grade projects"
 readme = "README.md"
+urls = { "Homepage" = "https://github.com/wildhash/RepoMan", "Repository" = "https://github.com/wildhash/RepoMan.git" }
 requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.25.0",

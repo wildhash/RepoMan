@@ -85,3 +85,10 @@ jobs:
           REPOMAN_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOMAN_EMBEDDING_DIMS: "384"
         run: repoman es ingest wildhash/RepoMan --issues-limit 5 --analyze
+
+      - name: Verify indexed documents
+        run: |
+          curl -fsS "http://localhost:9200/repoman-repositories/_count" | \
+            python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
+          curl -fsS "http://localhost:9200/repoman-issues/_count" | \
+            python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
