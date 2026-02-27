@@ -1,5 +1,9 @@
 .PHONY: install lint test serve docker-up docker-down demo clean
 
+COMPOSE_API_SERVICE ?= api
+DEMO_REPO ?= https://github.com/wildhash/RepoMan
+DEMO_ISSUES_LIMIT ?= 25
+
 install:
 	pip install -e ".[dev]"
 
@@ -29,8 +33,8 @@ docker-down:
 
 demo:
 	docker compose up --build -d \
-		&& docker compose exec -T api repoman es setup \
-		&& docker compose exec -T api repoman es ingest https://github.com/wildhash/RepoMan --issues-limit 25 --analyze
+		&& docker compose exec -T $(COMPOSE_API_SERVICE) repoman es setup \
+		&& docker compose exec -T $(COMPOSE_API_SERVICE) repoman es ingest $(DEMO_REPO) --issues-limit $(DEMO_ISSUES_LIMIT) --analyze
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

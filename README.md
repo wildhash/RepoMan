@@ -12,8 +12,16 @@ GitHub -> ingest -> Elasticsearch -> FastAPI -> dashboards
 
 The Python distribution name is `repoman-ai` (the module/CLI is still `repoman`).
 
+From a git checkout:
+
 ```bash
 pip install -e ".[dev]"
+```
+
+If/when published to PyPI:
+
+```bash
+pip install repoman-ai
 ```
 
 ## MVP scope

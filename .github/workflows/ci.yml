@@ -73,8 +73,8 @@ jobs:
         env:
           REPOMAN_ELASTICSEARCH_URL: http://localhost:9200
           REPOMAN_EMBEDDING_PROVIDER: hash
-          # CI uses tiny vectors for speed; the mappings are created with this dims value.
-          REPOMAN_EMBEDDING_DIMS: "8"
+          # Matches `.env.example` defaults so we exercise the real mappings in CI.
+          REPOMAN_EMBEDDING_DIMS: "384"
         run: repoman es setup
 
       - name: Ingest + analyze a repo
@@ -83,5 +83,5 @@ jobs:
           REPOMAN_EMBEDDING_PROVIDER: hash
           # Uses the ephemeral Actions token and a public repo; for private org tests use a PAT secret instead.
           REPOMAN_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOMAN_EMBEDDING_DIMS: "8"
+          REPOMAN_EMBEDDING_DIMS: "384"
         run: repoman es ingest wildhash/RepoMan --issues-limit 5 --analyze
