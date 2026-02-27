@@ -14,7 +14,7 @@ try {
   apiUrl = new URL(apiTarget)
 }
 const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:'
-const wsTarget = `${wsProtocol}//${apiUrl.host}`
+const wsTarget = `${wsProtocol}//${apiUrl.host}${apiUrl.pathname === '/' ? '' : apiUrl.pathname}`
 
 export default defineConfig({
   plugins: [react()],
