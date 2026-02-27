@@ -16,6 +16,7 @@ From a git checkout:
 
 ```bash
 pip install -e ".[dev]"
+repoman --help
 ```
 
 If/when published to PyPI:

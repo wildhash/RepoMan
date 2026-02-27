@@ -92,3 +92,8 @@ jobs:
             python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
           curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-issues/_count" | \
             python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
+
+          curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-repositories/_search" \
+            -H 'Content-Type: application/json' \
+            -d '{"size":1,"query":{"term":{"full_name":"wildhash/RepoMan"}}}' | \
+            python -c 'import json,sys; hits=json.load(sys.stdin)["hits"]["hits"]; assert hits, "RepoMan repo not found"'
