@@ -7,6 +7,7 @@ ES_URL ?= http://localhost:9200
 ifneq ($(strip $(REPOMAN_ELASTICSEARCH_URL)),)
 ES_URL := $(REPOMAN_ELASTICSEARCH_URL)
 endif
+WAIT_ES_TRIES ?= 90
 
 install:
 	pip install -e ".[dev]"
@@ -36,7 +37,7 @@ docker-down:
 	docker compose down
 
 wait-es:
-	@for i in $$(seq 1 60); do \
+	@for i in $$(seq 1 $(WAIT_ES_TRIES)); do \
 		if curl -fsS "$(ES_URL)" >/dev/null; then \
 			exit 0; \
 		fi; \
