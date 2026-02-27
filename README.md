@@ -1,17 +1,42 @@
 # RepoMan
-RepoMan deploys a council of specialized AI agents, each powered by different models, that analyze, debate, critique, and converge on a plan before touching a single line of code. Think of it as an AI engineering firm that audits and rehabilitates repos.
 
-## Elasticsearch integration
+RepoMan is a multi-model “agent council” that can ingest GitHub repos into Elasticsearch, score repo health, and (optionally) run a debate-to-consensus pipeline before making code changes.
 
-RepoMan can ingest GitHub repositories into Elasticsearch for full-text search, semantic search, and analytics.
+```text
+GitHub -> ingest -> Elasticsearch -> FastAPI -> dashboards
+            |
+            +-> agent council (audit -> debate -> execute -> validate) (WIP)
+```
 
-### Local setup (docker-compose)
+## MVP scope
+
+**Works today**
+
+- [x] Ingest GitHub repos/issues/PRs into Elasticsearch (`repoman es ingest`)
+- [x] Repo health scoring + dashboards backed by Elasticsearch
+- [x] A multi-agent consensus loop (requires LLM API keys)
+
+**Roadmap / WIP**
+
+- [ ] Make the 7-phase “transform and ship fixes” flow reproducible and safe by default
+- [ ] Stronger sandboxing + least-privilege GitHub token guidance
+- [ ] More first-class “repo portfolio” views (org-level insights, cross-repo duplicate detection, etc.)
+
+## Why Elasticsearch
+
+Elasticsearch is the system-of-record for RepoMan because it supports:
+
+- **Full-text search** across repos, issues, and PRs (filters, aggregations, faceting)
+- **Vector search** (dense vectors) for semantic similarity
+- **Dashboards/analytics** for “repo health” scoring and portfolio-level views
+
+## Quickstart
 
 1. Copy `.env.example` to `.env` and set `REPOMAN_GITHUB_TOKEN`.
 2. Start the stack:
 
 ```bash
-docker compose up --build -d
+make docker-up
 ```
 
 3. Create indices (idempotent):
@@ -20,7 +45,15 @@ docker compose up --build -d
 repoman es setup
 ```
 
-### Ingest + analyze
+### 1-command demo
+
+Once your `.env` is configured, you can run:
+
+```bash
+make demo
+```
+
+## Ingest + analyze
 
 ```bash
 # Ingest a single repo
@@ -36,7 +69,7 @@ repoman es ingest wildhash --limit 10 --issues-limit 1000 --analyze
 repoman es ingest "language:python stars:>1000 vector database" --limit 10
 ```
 
-### Search & dashboards API
+## Search & dashboards API
 
 The FastAPI server exposes Elasticsearch-backed endpoints:
 

@@ -1,4 +1,4 @@
-.PHONY: install lint test serve docker-up docker-down clean
+.PHONY: install lint test serve docker-up docker-down demo clean
 
 install:
 	pip install -e ".[dev]"
@@ -26,6 +26,11 @@ docker-up:
 
 docker-down:
 	docker compose down
+
+demo:
+	docker compose up --build -d
+	docker compose exec -T api repoman es setup
+	docker compose exec -T api repoman es ingest https://github.com/wildhash/RepoMan --issues-limit 25 --analyze
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true

@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "repoman"
+name = "repoman-ai"
 version = "0.1.0"
 description = "Multi-model agentic system that transforms GitHub repositories into enterprise-grade projects"
 readme = "README.md"
