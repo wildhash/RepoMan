@@ -21,7 +21,6 @@ from repoman.config import Settings
 log = structlog.get_logger()
 
 DEFAULT_VECTOR_DIMS = 384
-VECTOR_DIMS = DEFAULT_VECTOR_DIMS
 
 
 class EmbeddingEncoder:
@@ -39,7 +38,7 @@ class HashEmbeddingEncoder(EmbeddingEncoder):
     vector representation for local development, tests, and lightweight usage.
     """
 
-    dims: int = DEFAULT_VECTOR_DIMS
+    dims: int
 
     _token_re = re.compile(r"[A-Za-z0-9_]+")
 

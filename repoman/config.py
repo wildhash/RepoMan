@@ -60,6 +60,7 @@ class Settings(BaseSettings):
 
     github_issue_ingest_limit: int = Field(
         default=300,
+        ge=1,
         description="Maximum issues/PRs to ingest per repository",
         validation_alias=AliasChoices(
             "REPOMAN_GITHUB_ISSUE_INGEST_LIMIT",
@@ -80,6 +81,7 @@ class Settings(BaseSettings):
 
     embedding_dims: int = Field(
         default=384,
+        ge=1,
         description="Embedding vector dimensions (must match Elasticsearch mappings)",
         validation_alias=AliasChoices("REPOMAN_EMBEDDING_DIMS", "EMBEDDING_DIMS"),
     )

@@ -140,7 +140,12 @@ def es_setup() -> None:
 def es_ingest(
     input_value: str = typer.Argument(..., help="Repo URL, owner/repo, user/org, or GitHub search query"),
     limit: int = typer.Option(20, "--limit", help="Max repos for user/org/search inputs"),
-    issues_limit: int | None = typer.Option(None, "--issues-limit", help="Max issues/PRs to ingest per repo"),
+    issues_limit: int | None = typer.Option(
+        None,
+        "--issues-limit",
+        min=1,
+        help="Max issues/PRs to ingest per repo",
+    ),
     analyze: bool = typer.Option(False, "--analyze", help="Run analysis after ingestion"),
 ) -> None:
     """Ingest GitHub data into Elasticsearch."""
