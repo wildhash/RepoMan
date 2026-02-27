@@ -144,8 +144,19 @@ class TestHealthScoring:
 
     def test_weighted_score(self) -> None:
         """Weighted score should compute correctly."""
-        dims = {k: 8.0 for k in ["architecture", "code_quality", "test_coverage", "security",
-                                   "documentation", "performance", "maintainability", "deployment_readiness"]}
+        dims = {
+            k: 8.0
+            for k in [
+                "architecture",
+                "code_quality",
+                "test_coverage",
+                "security",
+                "documentation",
+                "performance",
+                "maintainability",
+                "deployment_readiness",
+            ]
+        }
         score = compute_weighted_score(dims)
         assert score == pytest.approx(8.0, abs=0.01)
 

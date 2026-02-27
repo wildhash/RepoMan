@@ -21,7 +21,9 @@ async def git_commit(repo_path: str, message: str) -> bool:
     """
     try:
         add_proc = await asyncio.create_subprocess_exec(
-            "git", "add", ".",
+            "git",
+            "add",
+            ".",
             cwd=repo_path,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -29,7 +31,11 @@ async def git_commit(repo_path: str, message: str) -> bool:
         await add_proc.communicate()
 
         commit_proc = await asyncio.create_subprocess_exec(
-            "git", "commit", "-m", message, "--allow-empty",
+            "git",
+            "commit",
+            "-m",
+            message,
+            "--allow-empty",
             cwd=repo_path,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -55,7 +61,9 @@ async def git_status(repo_path: str) -> str:
         git status output string.
     """
     proc = await asyncio.create_subprocess_exec(
-        "git", "status", "--short",
+        "git",
+        "status",
+        "--short",
         cwd=repo_path,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,

@@ -39,7 +39,9 @@ def detect_languages(clone_path: str, max_file_size_kb: int = 500) -> dict[str, 
                 continue
 
     total = sum(counts.values()) or 1
-    return {lang: round(count / total, 4) for lang, count in sorted(counts.items(), key=lambda x: -x[1])}
+    return {
+        lang: round(count / total, 4) for lang, count in sorted(counts.items(), key=lambda x: -x[1])
+    }
 
 
 def detect_frameworks(clone_path: str) -> list[str]:

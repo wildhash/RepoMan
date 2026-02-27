@@ -22,7 +22,9 @@ class Sandbox:
         self._image = image
         self._enabled = enabled
 
-    async def run(self, command: list[str], repo_path: str, timeout: int = 120) -> tuple[int, str, str]:
+    async def run(
+        self, command: list[str], repo_path: str, timeout: int = 120
+    ) -> tuple[int, str, str]:
         """Run a command, optionally in a Docker container.
 
         Args:
@@ -35,12 +37,19 @@ class Sandbox:
         """
         if self._enabled:
             docker_cmd = [
-                "docker", "run", "--rm",
-                "--network", "none",
-                "--memory", "512m",
-                "--cpus", "1",
-                "-v", f"{repo_path}:/workspace",
-                "-w", "/workspace",
+                "docker",
+                "run",
+                "--rm",
+                "--network",
+                "none",
+                "--memory",
+                "512m",
+                "--cpus",
+                "1",
+                "-v",
+                f"{repo_path}:/workspace",
+                "-w",
+                "/workspace",
                 self._image,
             ] + command
             cmd = docker_cmd

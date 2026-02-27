@@ -43,14 +43,16 @@ Return a JSON object with the standard audit structure."""
             issues = []
             for item in raw:
                 if isinstance(item, dict):
-                    issues.append(Issue(
-                        severity=item.get("severity", "minor"),
-                        category=item.get("category", "architecture"),
-                        file_path=item.get("file_path"),
-                        line_number=item.get("line_number"),
-                        description=item.get("description", ""),
-                        suggested_fix=item.get("suggested_fix", ""),
-                    ))
+                    issues.append(
+                        Issue(
+                            severity=item.get("severity", "minor"),
+                            category=item.get("category", "architecture"),
+                            file_path=item.get("file_path"),
+                            line_number=item.get("line_number"),
+                            description=item.get("description", ""),
+                            suggested_fix=item.get("suggested_fix", ""),
+                        )
+                    )
             return issues
 
         return AgentAuditReport(
@@ -147,9 +149,7 @@ Return JSON with: agent_name (str), score (float 0-10), approve (bool), blocking
             rationale=data.get("rationale", ""),
         )
 
-    async def review_changes(
-        self, change_sets: list[ChangeSet], snapshot: RepoSnapshot
-    ) -> dict:
+    async def review_changes(self, change_sets: list[ChangeSet], snapshot: RepoSnapshot) -> dict:
         """Review changes for overall coherence.
 
         Args:
@@ -159,9 +159,7 @@ Return JSON with: agent_name (str), score (float 0-10), approve (bool), blocking
         Returns:
             Review result with 'approved' bool and 'rejections' list.
         """
-        changes_summary = "\n".join(
-            f"- {cs.step_name}: {cs.summary}" for cs in change_sets
-        )
+        changes_summary = "\n".join(f"- {cs.step_name}: {cs.summary}" for cs in change_sets)
         prompt = f"""Review these changes for overall coherence and completeness.
 
 Changes:
@@ -206,8 +204,7 @@ Return a JSON unified plan with: priority_order (list), steps (dict keyed by ste
             Final unified plan dictionary.
         """
         votes_summary = {
-            name: {"score": v.score, "rationale": v.rationale}
-            for name, v in votes.items()
+            name: {"score": v.score, "rationale": v.rationale} for name, v in votes.items()
         }
         prompt = f"""Consensus was not reached. Make a final binding decision.
 

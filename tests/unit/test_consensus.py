@@ -21,7 +21,9 @@ class TestVoteAggregation:
     def test_all_approve(self) -> None:
         """All high scores should indicate consensus reached."""
         votes = {
-            "Architect": AgentVote(agent_name="Architect", score=8.0, approve=True, rationale="Good"),
+            "Architect": AgentVote(
+                agent_name="Architect", score=8.0, approve=True, rationale="Good"
+            ),
             "Auditor": AgentVote(agent_name="Auditor", score=9.0, approve=True, rationale="Secure"),
         }
         result = aggregate_votes(votes)

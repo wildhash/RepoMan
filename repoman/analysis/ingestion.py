@@ -44,7 +44,12 @@ class RepoIngester:
 
         log.info("cloning_repo", url=repo_url, path=clone_path)
         proc = await asyncio.create_subprocess_exec(
-            "git", "clone", "--depth", "1", repo_url, clone_path,
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            repo_url,
+            clone_path,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -101,8 +106,12 @@ class RepoIngester:
         # Check existence of key files
         has_readme = any(f.lower().startswith("readme") for f in file_tree)
         has_tests = any("test" in f.lower() for f in file_tree)
-        has_ci = any(".github/workflows" in f or ".circleci" in f or "Jenkinsfile" in f for f in file_tree)
-        has_dockerfile = any(f.lower() == "dockerfile" or "dockerfile" in f.lower() for f in file_tree)
+        has_ci = any(
+            ".github/workflows" in f or ".circleci" in f or "Jenkinsfile" in f for f in file_tree
+        )
+        has_dockerfile = any(
+            f.lower() == "dockerfile" or "dockerfile" in f.lower() for f in file_tree
+        )
         has_license = any(f.lower().startswith("license") for f in file_tree)
         has_env_example = any(".env.example" in f or ".env.sample" in f for f in file_tree)
 
@@ -143,12 +152,22 @@ def _find_entry_points(clone_path: str, languages: dict[str, float]) -> list[str
         List of relative paths to entry point files.
     """
     candidates = [
-        "main.py", "app.py", "server.py", "manage.py",
-        "index.js", "index.ts", "server.js", "app.js",
-        "src/main.rs", "src/lib.rs",
-        "main.go", "cmd/main.go",
-        "Main.java", "src/main/java/Main.java",
-        "index.php", "main.rb",
+        "main.py",
+        "app.py",
+        "server.py",
+        "manage.py",
+        "index.js",
+        "index.ts",
+        "server.js",
+        "app.js",
+        "src/main.rs",
+        "src/lib.rs",
+        "main.go",
+        "cmd/main.go",
+        "Main.java",
+        "src/main/java/Main.java",
+        "index.php",
+        "main.rb",
     ]
     found = []
     root = Path(clone_path)

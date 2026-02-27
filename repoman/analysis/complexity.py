@@ -24,8 +24,13 @@ def cyclomatic_complexity(source: str) -> int:
 
     complexity = 1
     branch_types = (
-        ast.If, ast.For, ast.While, ast.ExceptHandler,
-        ast.With, ast.Assert, ast.comprehension,
+        ast.If,
+        ast.For,
+        ast.While,
+        ast.ExceptHandler,
+        ast.With,
+        ast.Assert,
+        ast.comprehension,
     )
     for node in ast.walk(tree):
         if isinstance(node, branch_types):
@@ -48,7 +53,9 @@ def analyse_python_file(path: str) -> dict:
     except (SyntaxError, OSError):
         return {"functions": 0, "classes": 0, "complexity": 0, "lines": 0}
 
-    functions = sum(1 for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)))
+    functions = sum(
+        1 for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    )
     classes = sum(1 for node in ast.walk(tree) if isinstance(node, ast.ClassDef))
     return {
         "functions": functions,

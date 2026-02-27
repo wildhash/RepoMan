@@ -37,7 +37,9 @@ async def bulk_index(
         if attempt > max_attempts:
             raise RuntimeError(f"Bulk indexing failed after {max_attempts} attempts")
 
-        success_count, errors = await async_bulk(es, pending, raise_on_error=False, stats_only=False)
+        success_count, errors = await async_bulk(
+            es, pending, raise_on_error=False, stats_only=False
+        )
         if isinstance(errors, int):
             raise RuntimeError("Unexpected async_bulk response: stats_only=True")
         if not errors:

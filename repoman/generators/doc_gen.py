@@ -32,8 +32,8 @@ class DocGenerator:
 
 Repository: {snapshot.name}
 Language: {snapshot.primary_language}
-Frameworks: {', '.join(snapshot.frameworks)}
-Entry points: {', '.join(snapshot.entry_points)}
+Frameworks: {", ".join(snapshot.frameworks)}
+Entry points: {", ".join(snapshot.entry_points)}
 Has tests: {snapshot.has_tests}
 Has CI: {snapshot.has_ci}
 

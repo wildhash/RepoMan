@@ -30,14 +30,13 @@ class AuditorAgent(BaseAgent):
             AgentAuditReport with security and quality findings.
         """
         files_preview = "\n".join(
-            f"{path}: {summary}"
-            for path, summary in list(snapshot.file_summaries.items())[:30]
+            f"{path}: {summary}" for path, summary in list(snapshot.file_summaries.items())[:30]
         )
         prompt = f"""Perform an adversarial security and quality audit of this repository.
 
 Repository: {snapshot.url}
 Language: {snapshot.primary_language}
-Frameworks: {', '.join(snapshot.frameworks)}
+Frameworks: {", ".join(snapshot.frameworks)}
 Dependencies: {json.dumps(snapshot.dependencies[:20], indent=2)}
 
 File summaries:
@@ -71,18 +70,21 @@ Return a JSON object with exactly this structure:
         Returns:
             AgentAuditReport instance.
         """
+
         def parse_issues(raw: list) -> list[Issue]:
             issues = []
             for item in raw:
                 if isinstance(item, dict):
-                    issues.append(Issue(
-                        severity=item.get("severity", "minor"),
-                        category=item.get("category", "bug"),
-                        file_path=item.get("file_path"),
-                        line_number=item.get("line_number"),
-                        description=item.get("description", ""),
-                        suggested_fix=item.get("suggested_fix", ""),
-                    ))
+                    issues.append(
+                        Issue(
+                            severity=item.get("severity", "minor"),
+                            category=item.get("category", "bug"),
+                            file_path=item.get("file_path"),
+                            line_number=item.get("line_number"),
+                            description=item.get("description", ""),
+                            suggested_fix=item.get("suggested_fix", ""),
+                        )
+                    )
             return issues
 
         return AgentAuditReport(
@@ -112,9 +114,7 @@ Return a JSON object with exactly this structure:
             Plan dictionary.
         """
         all_critical = [
-            issue.model_dump()
-            for report in audit_reports
-            for issue in report.critical_issues
+            issue.model_dump() for report in audit_reports for issue in report.critical_issues
         ]
         prompt = f"""Propose a security and quality improvement plan based on these critical issues.
 
@@ -188,9 +188,7 @@ Return JSON with: agent_name (str), score (float 0-10), approve (bool), blocking
             rationale=data.get("rationale", ""),
         )
 
-    async def review_changes(
-        self, change_sets: list[ChangeSet], snapshot: RepoSnapshot
-    ) -> dict:
+    async def review_changes(self, change_sets: list[ChangeSet], snapshot: RepoSnapshot) -> dict:
         """Review applied changes for security regressions.
 
         Args:
@@ -200,9 +198,7 @@ Return JSON with: agent_name (str), score (float 0-10), approve (bool), blocking
         Returns:
             Review result with 'approved' bool and 'rejections' list.
         """
-        changes_summary = "\n".join(
-            f"- {cs.step_name}: {cs.summary}" for cs in change_sets
-        )
+        changes_summary = "\n".join(f"- {cs.step_name}: {cs.summary}" for cs in change_sets)
         prompt = f"""Review these code changes for security regressions or new vulnerabilities.
 
 Changes:

@@ -30,8 +30,12 @@ class ModelRouter:
         """Construct provider instances for each agent role."""
         cfg = self._config
         if cfg.anthropic_api_key:
-            self._providers["orchestrator"] = AnthropicProvider(cfg.anthropic_api_key, cfg.orchestrator_model)
-            self._providers["architect"] = AnthropicProvider(cfg.anthropic_api_key, cfg.architect_model)
+            self._providers["orchestrator"] = AnthropicProvider(
+                cfg.anthropic_api_key, cfg.orchestrator_model
+            )
+            self._providers["architect"] = AnthropicProvider(
+                cfg.anthropic_api_key, cfg.architect_model
+            )
             self._providers["builder"] = AnthropicProvider(cfg.anthropic_api_key, cfg.builder_model)
             self._fallback_chain.append(
                 AnthropicProvider(cfg.anthropic_api_key, cfg.orchestrator_model)
@@ -67,17 +71,19 @@ class ModelRouter:
         providers_to_try: list[BaseLLMProvider] = []
         if role in self._providers:
             providers_to_try.append(self._providers[role])
-        providers_to_try.extend(
-            p for p in self._fallback_chain if p not in providers_to_try
-        )
+        providers_to_try.extend(p for p in self._fallback_chain if p not in providers_to_try)
 
         last_exc: Exception | None = None
         for provider in providers_to_try:
             try:
                 response = await provider.complete(messages, system_prompt, **kwargs)
-                await log.ainfo("llm_call", role=role, model=response.model,
-                                input_tokens=response.input_tokens,
-                                output_tokens=response.output_tokens)
+                await log.ainfo(
+                    "llm_call",
+                    role=role,
+                    model=response.model,
+                    input_tokens=response.input_tokens,
+                    output_tokens=response.output_tokens,
+                )
                 return response
             except Exception as exc:
                 log.warning("provider_fallback", role=role, error=str(exc))

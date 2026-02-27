@@ -85,8 +85,10 @@ class ConsensusEngine:
 
             # Phase 2a: Each agent critiques others' plans
             critiques_list = await asyncio.gather(
-                *[agent.critique_plans({k: v for k, v in plans.items() if k != agent.name})
-                  for agent in agents],
+                *[
+                    agent.critique_plans({k: v for k, v in plans.items() if k != agent.name})
+                    for agent in agents
+                ],
                 return_exceptions=True,
             )
             critiques: dict[str, dict] = {}

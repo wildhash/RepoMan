@@ -88,14 +88,20 @@ class ElasticsearchIngestionService:
                 out_repos.append(full_name)
         return out_repos
 
-    async def ingest_repo(self, repo_input: str, *, issues_limit: int | None = None) -> dict[str, Any]:
+    async def ingest_repo(
+        self, repo_input: str, *, issues_limit: int | None = None
+    ) -> dict[str, Any]:
         """Ingest a single repo and its issues/PRs."""
         repo_full_name = parse_repo_full_name(repo_input)
         repo = await self._github.get_repo(repo_full_name)
 
         readme_text = await self._github.get_readme_text(repo_full_name)
-        has_contributing = await self._file_exists_any(repo_full_name, ["CONTRIBUTING.md", "contributing.md"])
-        has_license = await self._file_exists_any(repo_full_name, ["LICENSE", "LICENSE.md", "license", "license.md"])
+        has_contributing = await self._file_exists_any(
+            repo_full_name, ["CONTRIBUTING.md", "contributing.md"]
+        )
+        has_license = await self._file_exists_any(
+            repo_full_name, ["LICENSE", "LICENSE.md", "license", "license.md"]
+        )
         has_ci = await self._file_exists_any(
             repo_full_name,
             [".github/workflows", ".travis.yml", "Jenkinsfile", ".circleci"],
@@ -143,7 +149,9 @@ class ElasticsearchIngestionService:
         )
 
         # Index repository metadata.
-        await self._es.index(index=REPOSITORIES_INDEX, id=repo_doc["repo_id"], document=repo_doc, refresh=False)
+        await self._es.index(
+            index=REPOSITORIES_INDEX, id=repo_doc["repo_id"], document=repo_doc, refresh=False
+        )
 
         # Issues/PRs
         if issues_limit is None:
@@ -159,7 +167,9 @@ class ElasticsearchIngestionService:
             since=_now() - timedelta(days=365),
             limit=effective_issues_limit,
         )
-        issue_docs = issues_to_documents(issues, repo_full_name=repo_full_name, encoder=self._encoder)
+        issue_docs = issues_to_documents(
+            issues, repo_full_name=repo_full_name, encoder=self._encoder
+        )
 
         actions = [
             {
@@ -201,7 +211,9 @@ class ElasticsearchIngestionService:
 
         last_commit = repo_doc.get("last_commit_date")
         last_commit_dt = (
-            datetime.fromisoformat(last_commit) if isinstance(last_commit, str) and last_commit else None
+            datetime.fromisoformat(last_commit)
+            if isinstance(last_commit, str) and last_commit
+            else None
         )
         activity_score = compute_activity_score(last_commit_dt)
         community_score = compute_community_score(

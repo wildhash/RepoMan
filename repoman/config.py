@@ -20,8 +20,12 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(default="", description="Anthropic API key")
     openai_api_key: str = Field(default="", description="OpenAI API key")
 
-    orchestrator_model: str = Field(default="claude-sonnet-4-20250514", description="Orchestrator LLM model")
-    architect_model: str = Field(default="claude-sonnet-4-20250514", description="Architect LLM model")
+    orchestrator_model: str = Field(
+        default="claude-sonnet-4-20250514", description="Orchestrator LLM model"
+    )
+    architect_model: str = Field(
+        default="claude-sonnet-4-20250514", description="Architect LLM model"
+    )
     auditor_model: str = Field(default="gpt-4o", description="Auditor LLM model")
     builder_model: str = Field(default="claude-sonnet-4-20250514", description="Builder LLM model")
 
@@ -37,7 +41,9 @@ class Settings(BaseSettings):
 
     api_host: str = Field(default="0.0.0.0", description="API server host")
     api_port: int = Field(default=8000, description="API server port")
-    cors_origins: list[str] = Field(default=["http://localhost:5173"], description="CORS allowed origins")
+    cors_origins: list[str] = Field(
+        default=["http://localhost:5173"], description="CORS allowed origins"
+    )
 
     elasticsearch_url: str = Field(
         default="",

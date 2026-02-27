@@ -59,7 +59,9 @@ class GitHubClient:
         owner, repo = parse_repo_full_name(repo_full_name).split("/", 1)
         return await self._request_json("GET", f"/repos/{owner}/{repo}/languages")
 
-    async def get_contributors(self, repo_full_name: str, *, limit: int = 200) -> list[dict[str, Any]]:
+    async def get_contributors(
+        self, repo_full_name: str, *, limit: int = 200
+    ) -> list[dict[str, Any]]:
         owner, repo = parse_repo_full_name(repo_full_name).split("/", 1)
         return await self._paginate(f"/repos/{owner}/{repo}/contributors", limit=limit)
 
@@ -122,7 +124,11 @@ class GitHubClient:
     async def list_user_repos(self, user_or_org: str, *, limit: int = 200) -> list[dict[str, Any]]:
         info = await self._request_json("GET", f"/users/{user_or_org}")
         kind = (info.get("type") or "").lower()
-        base = f"/orgs/{user_or_org}/repos" if kind == "organization" else f"/users/{user_or_org}/repos"
+        base = (
+            f"/orgs/{user_or_org}/repos"
+            if kind == "organization"
+            else f"/users/{user_or_org}/repos"
+        )
         return await self._paginate(
             base,
             params={"per_page": 100, "sort": "updated", "direction": "desc"},
@@ -150,7 +156,9 @@ class GitHubClient:
             page += 1
         return out[:limit]
 
-    async def _request_json(self, method: str, path: str, *, params: dict[str, Any] | None = None) -> Any:
+    async def _request_json(
+        self, method: str, path: str, *, params: dict[str, Any] | None = None
+    ) -> Any:
         resp = await self._client.request(method, path, params=params)
         await self._respect_rate_limit(resp)
         resp.raise_for_status()

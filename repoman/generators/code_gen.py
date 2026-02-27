@@ -20,9 +20,7 @@ class CodeGenerator:
         """
         self._router = router
 
-    async def generate(
-        self, description: str, language: str, context: str = ""
-    ) -> str:
+    async def generate(self, description: str, language: str, context: str = "") -> str:
         """Generate code for a given description.
 
         Args:

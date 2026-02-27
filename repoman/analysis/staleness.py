@@ -16,12 +16,16 @@ class StaleCounts:
     stale_prs_count: int
 
 
-def is_stale(updated_at: datetime, *, now: datetime | None = None, threshold_days: int = 30) -> bool:
+def is_stale(
+    updated_at: datetime, *, now: datetime | None = None, threshold_days: int = 30
+) -> bool:
     now_dt = now or datetime.now(tz=UTC)
     return (now_dt - updated_at) >= timedelta(days=threshold_days)
 
 
-def days_open(*, created_at: datetime, closed_at: datetime | None, now: datetime | None = None) -> int:
+def days_open(
+    *, created_at: datetime, closed_at: datetime | None, now: datetime | None = None
+) -> int:
     end = closed_at or (now or datetime.now(tz=UTC))
     return max(int((end - created_at).total_seconds() // 86400), 0)
 

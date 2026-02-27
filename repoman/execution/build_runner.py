@@ -53,15 +53,19 @@ class ValidationEngine:
         for check_name, cmd in checks:
             log.info("running_check", check=check_name, language=language)
             rc, stdout, stderr = await run_command(cmd, repo_path)
-            results.append(ValidationResult(
-                check_name=check_name,
-                passed=rc == 0,
-                output=(stdout + stderr)[:2000],
-                details={"returncode": rc},
-            ))
+            results.append(
+                ValidationResult(
+                    check_name=check_name,
+                    passed=rc == 0,
+                    output=(stdout + stderr)[:2000],
+                    details={"returncode": rc},
+                )
+            )
 
         all_passed = all(r.passed for r in results) if results else True
-        health = 10.0 if all_passed else max(0.0, 10.0 - sum(1 for r in results if not r.passed) * 2)
+        health = (
+            10.0 if all_passed else max(0.0, 10.0 - sum(1 for r in results if not r.passed) * 2)
+        )
 
         return ValidationReport(
             all_passed=all_passed,
