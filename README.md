@@ -12,6 +12,8 @@ GitHub -> ingest -> Elasticsearch -> FastAPI -> dashboards
 
 The Python distribution name is `repoman-ai` (the module/CLI is still `repoman`).
 
+There is an unrelated `repoman` package on PyPI, so this project uses `repoman-ai` to avoid collisions.
+
 From a git checkout:
 
 ```bash
@@ -93,6 +95,8 @@ make demo COMPOSE_API_SERVICE=backend
 ```
 
 `make demo` will bring up the Docker Compose stack, create the Elasticsearch indices, and ingest + analyze this RepoMan repo. After it completes:
+
+This flow does not require LLM API keys.
 
 - API is at `http://localhost:8000`
 - Frontend is at `http://localhost:5173`

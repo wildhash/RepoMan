@@ -1,7 +1,7 @@
 name: CI
 
 env:
-  ELASTICSEARCH_VERSION: 8.13.0
+  ELASTICSEARCH_VERSION: 8.13.0 # Keep in sync with docker-compose.yml
   REPOMAN_ELASTICSEARCH_URL: http://elasticsearch:9200
   REPOMAN_SMOKE_REPO: ${{ github.repository }}
 
@@ -36,6 +36,7 @@ jobs:
         run: pytest tests/unit -v --tb=short
 
   es-smoke:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
 
     # This job uses a dedicated Elasticsearch service container, so any indices it creates
