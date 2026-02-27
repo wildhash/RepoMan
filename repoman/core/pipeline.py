@@ -89,15 +89,19 @@ class Pipeline:
             # Phase 2: Parallel audit
             state.current_phase = Phase.audit
             await emit("phase_started", {"phase": Phase.audit.value})
+            audit_tasks = [
+                ("architect", self._architect.audit(state.snapshot)),
+                ("auditor", self._auditor.audit(state.snapshot)),
+                ("builder", self._builder.audit(state.snapshot)),
+            ]
             audit_results = await asyncio.gather(
-                self._architect.audit(state.snapshot),
-                self._auditor.audit(state.snapshot),
-                self._builder.audit(state.snapshot),
+                *[t for _, t in audit_tasks],
                 return_exceptions=True,
             )
-            for audit_result in audit_results:
+            for (agent_name, _), audit_result in zip(audit_tasks, audit_results):
                 if isinstance(audit_result, BaseException):
                     reraise_if_fatal(audit_result)
+                    log.warning("audit_failed", agent=agent_name, error=str(audit_result))
                     continue
                 state.audit_reports.append(audit_result)
             await emit(
@@ -135,15 +139,19 @@ class Pipeline:
             # Phase 5: Review
             state.current_phase = Phase.review
             await emit("phase_started", {"phase": Phase.review.value})
+            review_tasks = [
+                ("architect", self._architect.review_changes(state.change_sets, state.snapshot)),
+                ("auditor", self._auditor.review_changes(state.change_sets, state.snapshot)),
+            ]
             review_results = await asyncio.gather(
-                self._architect.review_changes(state.change_sets, state.snapshot),
-                self._auditor.review_changes(state.change_sets, state.snapshot),
+                *[t for _, t in review_tasks],
                 return_exceptions=True,
             )
             rejections: list[str] = []
-            for review in review_results:
+            for (agent_name, _), review in zip(review_tasks, review_results):
                 if isinstance(review, BaseException):
                     reraise_if_fatal(review)
+                    log.warning("review_failed", agent=agent_name, error=str(review))
                     continue
                 if isinstance(review, dict) and not review.get("approved", True):
                     rejections.extend(review.get("rejections", []))

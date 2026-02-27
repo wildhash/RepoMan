@@ -20,8 +20,6 @@ from repoman.config import Settings
 
 log = structlog.get_logger()
 
-DEFAULT_VECTOR_DIMS = 384
-
 
 class EmbeddingEncoder:
     """Protocol-like base for encoders."""

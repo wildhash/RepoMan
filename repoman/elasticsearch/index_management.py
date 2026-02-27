@@ -21,6 +21,7 @@ log = structlog.get_logger()
 
 
 def _apply_vector_dims(obj: Any, vector_dims: int) -> None:
+    """Apply a global `dense_vector.dims` override to a mapping body."""
     if isinstance(obj, dict):
         if obj.get("type") == "dense_vector" and "dims" in obj:
             obj["dims"] = vector_dims
@@ -33,15 +34,14 @@ def _apply_vector_dims(obj: Any, vector_dims: int) -> None:
             _apply_vector_dims(item, vector_dims)
 
 
-def _load_mapping(name: str, *, vector_dims: int | None = None) -> dict:
+def _load_mapping(name: str, *, vector_dims: int) -> dict:
     path = Path(__file__).parent / "mappings" / f"{name}.json"
     body = json.loads(path.read_text(encoding="utf-8"))
-    if vector_dims is not None:
-        _apply_vector_dims(body, vector_dims)
+    _apply_vector_dims(body, vector_dims)
     return body
 
 
-async def ensure_indices(es: AsyncElasticsearch, *, vector_dims: int | None = None) -> None:
+async def ensure_indices(es: AsyncElasticsearch, *, vector_dims: int) -> None:
     """Create indices/data streams required by RepoMan.
 
     Operations are idempotent; existing resources are left untouched.
@@ -51,7 +51,7 @@ async def ensure_indices(es: AsyncElasticsearch, *, vector_dims: int | None = No
     """
     await _ensure_index(es, REPOSITORIES_INDEX, _load_mapping("repositories", vector_dims=vector_dims))
     await _ensure_index(es, ISSUES_INDEX, _load_mapping("issues", vector_dims=vector_dims))
-    await _ensure_analysis_data_stream(es)
+    await _ensure_analysis_data_stream(es, vector_dims=vector_dims)
 
 
 async def _ensure_index(es: AsyncElasticsearch, index: str, body: dict) -> None:
@@ -63,8 +63,8 @@ async def _ensure_index(es: AsyncElasticsearch, index: str, body: dict) -> None:
     await es.indices.create(index=index, **body)
 
 
-async def _ensure_analysis_data_stream(es: AsyncElasticsearch) -> None:
-    mapping = _load_mapping("analysis")["mappings"]
+async def _ensure_analysis_data_stream(es: AsyncElasticsearch, *, vector_dims: int) -> None:
+    mapping = _load_mapping("analysis", vector_dims=vector_dims)["mappings"]
 
     # Create an ILM policy that deletes backing indices after 90 days.
     await es.ilm.put_lifecycle(

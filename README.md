@@ -29,7 +29,7 @@ repoman es ingest https://github.com/wildhash/RepoMan --analyze
 # Or ingest by user/org (top N most recently updated)
 repoman es ingest wildhash --limit 10 --analyze
 
-# Optional: raise the per-repo issues/PRs cap (default: 300)
+# Optional: raise the per-repo issues/PRs cap (default: REPOMAN_GITHUB_ISSUE_INGEST_LIMIT, env default 300)
 repoman es ingest wildhash --limit 10 --issues-limit 1000 --analyze
 
 # Or ingest via GitHub search
