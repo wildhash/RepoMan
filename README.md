@@ -88,6 +88,14 @@ Once your `.env` is configured, you can run:
 make demo
 ```
 
+To ingest PitCrew instead:
+
+```bash
+make demo-pitcrew
+```
+
+`make demo-pitcrew` is a fixed preset (PitCrew + `--issues-limit=200`), so it can take longer than `make demo`.
+
 If your `docker-compose.yml` service running the CLI isn't named `api`, override it:
 
 ```bash
