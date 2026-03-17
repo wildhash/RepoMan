@@ -20,6 +20,8 @@ The repo already exists at `github.com/wildhash/RepoMan` with 36 commits. It has
 4. Test everything (pytest for Python, vitest for frontend).
 5. If a file already exists and works, extend it — don’t rewrite from scratch.
 
+**Scope note:** This document intentionally mixes **target end-state** and **implementation constraints**. Any *exact* model names, provider features, library versions, and API shapes are **illustrative targets** unless they already exist in the repo. Always validate against the current codebase, SDKs, and package registries before implementation.
+
 **Contributor workflow (CLAUDE.md practices):**
 
 1. **Plan Mode first.** Read the relevant files, sketch a plan, and name the exact commands you’ll use to verify.
@@ -140,6 +142,12 @@ class BaseLLMClient(ABC):
 
 # The ModelRouter selects provider + model based on agent role, handles fallback, rate limiting, cost tracking.
 ```
+
+**Failure handling requirements (non-negotiable):**
+
+- Provider clients must enforce timeouts and return *structured* failure reasons (at minimum: `rate_limited`, `timeout`, `bad_request`, `auth_error`, `provider_down`).
+- The ModelRouter must try fallbacks with exponential backoff before marking an agent unavailable.
+- If an agent is unavailable after all fallbacks, mark it as `degraded` and continue the pipeline with remaining agents (subject to the minimum-agent rule in Section 12).
 
 ## SECTION 3: THE 7-PHASE PIPELINE
 
@@ -357,6 +365,8 @@ Use PyGithub or httpx to the GitHub REST API. Create branch, commit changes, ope
 
 ## SECTION 4: PROJECT STRUCTURE
 
+Treat this tree as the **target end-state** layout. Do not add directories or files as empty shells “just to match the diagram” — only introduce new modules when you can ship working implementations (and tests, when applicable) in the same change.
+
 ```
 RepoMan/
 ├── .github/workflows/
@@ -551,7 +561,15 @@ health_score = weighted_sum(
 
 Each dimension scores 0-100. Overall health = weighted sum → 0-100.
 
+**Evolution rules:**
+
+- Health scoring must be versioned (e.g., `health_score_version`) so older Elasticsearch documents and dashboards remain interpretable.
+- If dimensions/weights change, prefer explicit migrations or reindex runs over silently changing the meaning of an existing score.
+- Extend the existing scoring implementation; don’t break or delete existing fields without a documented deprecation path.
+
 ## SECTION 6: API SPECIFICATION
+
+**Stability note:** If these endpoints become user-facing contracts, use explicit versioning (e.g., `/api/v1/...`) and avoid breaking changes in-place.
 
 ### REST Endpoints
 
@@ -714,6 +732,8 @@ REPOMAN_CONSENSUS_THRESHOLD=0.75           # 3/4 agents must approve (if using 0
 
 ### Python (pyproject.toml — extend existing)
 
+The TOML and JSON blocks below are **merge targets**, not full-file replacements. Do not overwrite working manifests to match these examples.
+
 ```toml
 [project]
 name = "repoman-ai"
@@ -787,6 +807,8 @@ dev = [
 ## SECTION 11: BUILD ORDER
 
 Execute in this exact sequence:
+
+This order describes dependency sequencing, not a requirement to complete each phase in one PR. Ship small, test-backed slices within a phase, and don’t create stub-only modules to “unlock” later phases.
 
 ```
 PHASE A — Foundation (extend existing)
@@ -865,7 +887,7 @@ PHASE J — Infrastructure
 1. **Multi-model is the feature.** Every audit MUST use all 4 models. Never shortcut to single-model.
 2. **Debate is the differentiator.** The consensus engine must produce readable, structured debate transcripts that demonstrate genuine multi-perspective analysis.
 3. **WebSocket everything.** Every phase transition, every debate message, every code change streams to the frontend in real-time.
-4. **Type everything.** Python: Pydantic v2 + mypy strict. TypeScript: strict mode. No `Any`, no `any`.
+4. **Type everything.** Python: Pydantic v2 + mypy strict. TypeScript: strict mode. Avoid `Any`/`any` in application logic; if unavoidable at external boundaries, confine it to thin adapters with explicit validation.
 5. **Cost transparency.** Track and display per-agent, per-phase token usage and cost.
 6. **Diff-first code review.** The CodeReview page must show side-by-side diffs with inline agent comments — this is how users decide to approve the PR.
 7. **Draft PRs by default.** Never auto-merge. Always create as draft unless explicitly overridden.
