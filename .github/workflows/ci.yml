@@ -1,9 +1,13 @@
 name: CI
 
 env:
-  ELASTICSEARCH_VERSION: 8.13.0 # Keep in sync with docker-compose.yml
-  REPOMAN_ELASTICSEARCH_URL: http://elasticsearch:9200
+  REPOMAN_ELASTICSEARCH_URL: http://127.0.0.1:9200
   REPOMAN_SMOKE_REPO: ${{ github.repository }}
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
 
 on:
   push:
@@ -14,6 +18,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -38,13 +43,17 @@ jobs:
   es-smoke:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     # This job uses a dedicated Elasticsearch service container, so any indices it creates
     # are ephemeral to this job run.
 
     services:
       elasticsearch:
-        image: docker.elastic.co/elasticsearch/elasticsearch:${{ env.ELASTICSEARCH_VERSION }}
+        # The env context is unavailable here. Keep this tag in sync with docker-compose.yml.
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+        ports:
+          - 9200:9200
         env:
           discovery.type: single-node
           xpack.security.enabled: "false"
@@ -65,7 +74,8 @@ jobs:
       - name: Wait for Elasticsearch
         run: |
           for i in $(seq 1 60); do
-            if curl -fsS "$REPOMAN_ELASTICSEARCH_URL" >/dev/null; then
+            if curl -fsS "$REPOMAN_ELASTICSEARCH_URL/_cluster/health?wait_for_status=yellow&timeout=1s" | \
+              python -c 'import json,sys; assert json.load(sys.stdin)["status"] in ("yellow", "green")'; then
               exit 0
             fi
             sleep 2
@@ -90,6 +100,7 @@ jobs:
 
       - name: Verify indexed documents
         run: |
+          curl -fsS -X POST "$REPOMAN_ELASTICSEARCH_URL/repoman-repositories,repoman-issues/_refresh" >/dev/null
           curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-repositories/_count" | \
             python -c 'import json,sys; d=json.load(sys.stdin); assert int(d.get("count", 0)) >= 1'
           curl -fsS "$REPOMAN_ELASTICSEARCH_URL/repoman-issues/_count" | \
