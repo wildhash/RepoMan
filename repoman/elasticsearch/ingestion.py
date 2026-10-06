@@ -184,6 +184,10 @@ class ElasticsearchIngestionService:
         if actions:
             await bulk_index(self._es, actions)
 
+        # The CLI can analyze immediately after ingestion. Elasticsearch acknowledges
+        # writes before search sees them, so publish both inputs before returning.
+        await self._es.indices.refresh(index=[REPOSITORIES_INDEX, ISSUES_INDEX])
+
         log.info(
             "es_ingest_completed",
             repo_full_name=repo_full_name,
